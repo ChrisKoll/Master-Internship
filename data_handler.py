@@ -5,18 +5,25 @@ class DataHandler:
 
     def __init__(self, file_location):
         self.file_location = file_location
-        self.annotation_data = self.read_data()
+        self.annotated_data = self.read_data()
 
     def read_data(self):
-        annotation_data = read_h5ad(filename=self.file_location)
+        annotated_data = read_h5ad(filename=self.file_location)
 
-        return annotation_data
+        return annotated_data
 
-    def print_data(self):
-        print(self.annotation_data.X)
+    def create_input_vector(self, cell_type: str = None, heart_region: str = None):
+        ad = self.annotated_data
 
+        if cell_type is not None:
+            ad_subset = ad[ad.obs.cell_type == cell_type].X
 
-if __name__ == '__main__':
-    file = "/home/ubuntu/Downloads/hca_heart_immune_download.h5ad"
-    dh = DataHandler(file)
-    dh.print_data()
+            return ad_subset
+
+        elif heart_region is not None:
+            ad_subset = ad[ad.obs.region == heart_region].X
+
+            return ad_subset
+
+        else:
+            print('Please provide a method argument...')
