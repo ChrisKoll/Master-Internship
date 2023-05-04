@@ -1,16 +1,25 @@
+
+
 import torch
 from torch import nn
-import torch.nn.functional as f
+import matplotlib.pyplot as plt
 
 
-# Input img -> Hidden dim -> mean, std -> Parameterization trick -> Decoder -> Output img
 class VariationalAutoencoder(nn.Module):
 
-    def __init__(self, input_dim, h_dim=200, z_dim=20):
+    def __init__(self, size_input_vector: int, size_latent_space: int):
         super().__init__()
-        self.img_2hid = nn.Linear(input_dim, h_dim)
-        self.hid_2mu = nn.Linear(h_dim, z_dim)
-        self.hid_2sigma = nn.Linear(h_dim, z_dim)
+
+        self.encoder = nn.Sequential(
+            nn.Linear(size_input_vector, 20000),
+            nn.ReLU(),
+            nn.Linear(20000, 10000),
+            nn.ReLU(),
+            nn.Linear(10000, 5000),
+            nn.ReLU(),
+            nn.Linear(5000, size_latent_space),
+            nn.ReLU()
+        )
 
     def encode(self):
         pass
@@ -20,12 +29,3 @@ class VariationalAutoencoder(nn.Module):
 
     def forward(self):
         pass
-
-
-def main():
-    # 28*28
-    x = torch.randn(1, 784)
-    vae = VariationalAutoencoder()
-    print(vae(x).shape)
-
-
