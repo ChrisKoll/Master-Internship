@@ -2,10 +2,10 @@ import data_handler as dh
 
 
 def main():
-    file = '/media/sf_Share/global_raw.h5ad'
+    file = '/media/sf_Share/sample_data.h5ad'
     handler = dh.DataHandler(file)
     # handler.show_data()
-    handler.tpm()
+    handler.subset_adata()
     # handler.create_input_vector(cell_type='Fibroblast')
     # control_data, training_data = handler.separate_individual()
 
