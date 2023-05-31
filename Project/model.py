@@ -1,3 +1,6 @@
+# Standard library imports
+from typing import Optional
+
 # Third-party library imports
 import torch
 import torch.nn as nn
@@ -106,7 +109,7 @@ class VariationalAutoencoder(nn.Module):
     Class containing the whole variational autoencoder.
     """
 
-    def __init__(self, size_input_vector: int):
+    def __init__(self, size_input_vector: int, *, device: Optional[str] = None):
         """Constructor
 
         :param size_input_vector: Size of the input vector
@@ -116,6 +119,9 @@ class VariationalAutoencoder(nn.Module):
         self.input_size = size_input_vector
         self.encoder = VariationalEncoder(size_input_vector)
         self.decoder = Decoder(size_input_vector)
+
+        # Device
+        self.device = device
 
     def forward(self, x):
         """

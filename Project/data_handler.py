@@ -46,7 +46,7 @@ class DataHandler:
         subset = self.adata[:number_cols, :number_rows]
         subset.write_h5ad(Path(export_path))
 
-    def create_tensor(self) -> torch.Tensor:
+    def to_tensor(self) -> torch.Tensor:
         """
         Converts the anndata expression matrix to a tensor.
 
