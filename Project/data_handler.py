@@ -1,11 +1,12 @@
 # Standard library imports
-from typing import Optional
-from pathlib import Path
 from os import path
+from pathlib import Path
+from typing import Optional
 
 # Third-party library imports
-from scanpy import read_h5ad
 from anndata import AnnData
+from scanpy import read_h5ad
+from torch import torch
 
 
 class DataHandler:
@@ -34,7 +35,7 @@ class DataHandler:
 
         return annotated_data
 
-    def subset_adata(self, export_path: str, number_cols: int = 5000, number_rows: int = 5000):
+    def subset_adata(self, export_path: str, *, number_cols: int = 5000, number_rows: int = 5000):
         """
         Subsets a given anndata object to a given size.
 
@@ -44,3 +45,14 @@ class DataHandler:
         """
         subset = self.adata[:number_cols, :number_rows]
         subset.write_h5ad(Path(export_path))
+
+    def create_tensor(self) -> torch.Tensor:
+        """
+        Converts the anndata expression matrix to a tensor.
+
+        :return: Anndata tensor
+        """
+        expression_data = self.adata.X
+        tensor_data = torch.tensor(expression_data)
+
+        return tensor_data
