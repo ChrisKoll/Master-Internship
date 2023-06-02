@@ -5,17 +5,16 @@ import torch
 import model
 
 
-def train(vae: model.VariationalAutoencoder, data: torch.Tensor, epochs: int) -> model.VariationalAutoencoder:
+def train(vae: model.VariationalAutoencoder, data: torch.Tensor, *, epochs: int, device: str) -> \
+        model.VariationalAutoencoder:
     """
 
     :param vae: Model architecture to be trained
     :param data: Data the model will be trained on
     :param epochs: Number of epochs
+    :param device: Provides the device for training
     :return: Returns the trained VAE model
     """
-    # Recognizes if cuda gpu is available
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
     # Optimizer
     opt = torch.optim.Adam(vae.parameters())
 

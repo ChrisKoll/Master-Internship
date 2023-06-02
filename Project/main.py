@@ -4,7 +4,7 @@ import torch
 # Local/application-specific import
 import data_handler as dh
 import model as m
-import train as t
+import training as t
 
 
 def main():
@@ -15,9 +15,8 @@ def main():
     # Recognizes if cuda gpu is available
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    vae = m.VariationalAutoencoder(data_tensor.size(), device=device)
-    vae = vae.to(vae.device)
-    vae = t.train(vae, data_tensor, 20)
+    vae = m.VariationalAutoencoder(data_tensor.size()).to(device)
+    vae = t.train(vae, data_tensor, epochs=20, device=device)
 
 
 if __name__ == '__main__':

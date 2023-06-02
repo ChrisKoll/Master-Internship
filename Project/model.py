@@ -99,7 +99,7 @@ class Decoder(nn.Module):
         z = f.relu(self.input_layer(z))
         z = f.relu(self.hidden_layer1(z))
         z = f.relu(self.hidden_layer2(z))
-        z = f.relu(self.output_layer(z))
+        z = self.output_layer(z)
 
         return z.reshape((number_samples, number_genes))
 
@@ -109,7 +109,7 @@ class VariationalAutoencoder(nn.Module):
     Class containing the whole variational autoencoder.
     """
 
-    def __init__(self, size_input_vector: int, *, device: Optional[str] = None):
+    def __init__(self, size_input_vector: int):
         """Constructor
 
         :param size_input_vector: Size of the input vector
@@ -119,9 +119,6 @@ class VariationalAutoencoder(nn.Module):
         self.input_size = size_input_vector
         self.encoder = VariationalEncoder(size_input_vector)
         self.decoder = Decoder(size_input_vector)
-
-        # Device
-        self.device = device
 
     def forward(self, x):
         """
