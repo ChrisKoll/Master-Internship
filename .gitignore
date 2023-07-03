@@ -1,0 +1,22 @@
+# Compiled Python files
+*.pyc
+*.pyo
+__pycache__/
+
+# Python virtual environments
+venv/
+env/
+env.bak/
+
+# PyCharm project settings
+.idea/
+
+# PyCharm debugger files
+*.iml
+*.iws
+*.ipr
+
+# Logs and other generated files
+*.log
+*.swp
+.DS_Store
