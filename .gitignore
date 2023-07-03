@@ -13,6 +13,7 @@ env.bak/
 
 # Setuptools egg files
 *.egg
+*.egg-info/
 
 # PyCharm debugger files
 *.iml
