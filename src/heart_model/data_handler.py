@@ -20,7 +20,16 @@ class DataHandler:
         :param file_location: Path to h5ad file
         """
         self.file_location = file_location
-        self.adata = self.read_data()
+        self._adata = self.read_data()
+
+    @property
+    def get_adata(self):
+        """
+        Getter adata attribute
+
+        :return: Anndata object
+        """
+        return self._adata
 
     def read_data(self) -> AnnData:
         """
@@ -28,7 +37,7 @@ class DataHandler:
 
         :return: Anndata object
         """
-        if path.exists(self.file_location) or self.file_location is None:
+        if not path.exists(self.file_location) or self.file_location is None:
             raise ValueError("Invalid or no file path provided.")
 
         annotated_data = read_h5ad(filename=self.file_location)
