@@ -19,3 +19,23 @@ def train(data: AnnData, vae: Optional[model.VariationalAutoencoder] = None, don
     :return: Returns the trained VAE model
     """
     # Shuffle the dataset ?
+
+    for fold, donor in enumerate(donors):
+        print(f"Fold {fold + 1}/{len(donors)}")
+
+        donor = choice(donors)
+
+        # Split data into train and validation sets based on the current donor
+        train_indices = np.where(data[:, donor_index] != donor)[0]
+        val_indices = np.where(gene_expression[:, donor_index] == donor)[0]
+
+        # Create dataset and data loaders
+        train_dataset = GeneExpressionDataset(gene_expression[train_indices])
+        val_dataset = GeneExpressionDataset(gene_expression[val_indices])
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size)
+
+        # Create model instance
+        model = VAE(input_dim, latent_dim)
+        optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+        criterion = nn.MSELoss()

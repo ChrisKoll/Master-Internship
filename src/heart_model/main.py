@@ -8,7 +8,7 @@ import training as t
 
 def main():
     file = '/media/sf_Share/sample_data.h5ad'
-    handler = dh.DataHandler(file)
+    handler = dh.Handler(file)
     # data_tensor = handler.to_tensor()
 
     # Recognizes if cuda gpu is available

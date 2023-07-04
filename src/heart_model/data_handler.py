@@ -9,7 +9,7 @@ from scanpy import read_h5ad
 from torch import torch
 
 
-class DataHandler:
+class Handler:
     """
     Class for handling h5ad data.
     """
@@ -20,7 +20,7 @@ class DataHandler:
         :param file_location: Path to h5ad file
         """
         self.file_location = file_location
-        self._adata = self.read_data()
+        self.adata = self.read_data()
 
     @property
     def get_adata(self):
@@ -29,7 +29,7 @@ class DataHandler:
 
         :return: Anndata object
         """
-        return self._adata
+        return self.adata
 
     def read_data(self) -> AnnData:
         """
