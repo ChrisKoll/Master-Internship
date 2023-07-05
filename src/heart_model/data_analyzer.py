@@ -2,18 +2,22 @@
 from os import path
 from typing import Optional
 
-# Local/application-specific import
-import constants as c
-
 # Third-party library imports
 from anndata import AnnData
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
+import numpy as np
 from scanpy import read_h5ad
-from sklearn.decomposition import TruncatedSVD
+from sklearn.decomposition import TruncatedSVD, PCA
+
+# Local import
+import constants as c
 
 
 class Analyzer:
+    """
+    Analyzes a given dataset with different statistical analysis methods.
+    """
 
     def __init__(self, file_location: Optional[str] = None):
         """Constructor
@@ -22,38 +26,50 @@ class Analyzer:
         """
         self.file_location = file_location
         self.file_name: Optional[str] = None
-        self.adata: Optional[AnnData] = None
+        self.adata: Optional[AnnData] = self.read_file()
 
     def read_file(self):
         """
         Reads the h5ad file.
+
+        :return: Anndata object
         """
+        # Checks if file path exists
         if not path.exists(self.file_location) or self.file_location is None:
             raise ValueError("Invalid or no file path provided.")
         else:
-            self.file_name = self.file_location.split("\\")[-1]
-            self.adata = read_h5ad(filename=self.file_location)
+            self.file_name = self.file_location.split("\\")[-1].split(".")[0]
+            adata = read_h5ad(filename=self.file_location)
 
-    def save_plots(self, plots, *, analysis: str):
+            return adata
+
+    def save_plots(self, data, *, analysis: str):
         """
         Saves a number of given plots to pdf.
 
-        :param plots: Plots that are saved
-        :param analysis: Type of analysis
+        :param data: Component analysis data
+        :param analysis: Analysis method
         """
-        # Creates PDF object
-        pdf = PdfPages("_".join([self.file_name, analysis]))
+        # Combine the components for plotting
+        to_plot = []
+        for idx in range(c.NUMBER_COMPONENTS - 1):
+            # For each iteration combine:
+            # Component of current iteration + Next component
+            to_plot.append((data[:, idx], data[:, idx + 1]))
 
-        # Iterate over the plots and save each one to the PDF file
-        for plot in plots:
-            # Create a new figure for each plot
+        # Creates PDF object
+        pdf = PdfPages(f"{self.file_name}_{analysis}.pdf")
+
+        # Iterates over the plotting data
+        for idx, plot in enumerate(to_plot):
+            # Create a new figure
             plt.figure()
 
-            # Generate the plot (replace this with your own plotting code)
-            plt.plot(plot['x'], plot['y'])
-            plt.xlabel('X')
-            plt.ylabel('Y')
-            plt.title(plot['title'])
+            # Generates the plot
+            plt.scatter(plot[0], plot[1])
+            plt.xlabel(f"Component {idx + 1}")
+            plt.ylabel(f"Component {idx + 2}")
+            plt.title(f"{analysis.upper()} Analysis")
 
             # Save the current figure to the PDF file
             pdf.savefig()
@@ -62,12 +78,32 @@ class Analyzer:
         pdf.close()
 
     def pca_analysis(self):
-        pass
+        """
+        Performs an SVD analysis for the provided data.
+        """
+        expression_matrix = self.adata.X.toarray()
+        # Filters indices (genes) with non-zero expression
+        non_zero = np.where(np.any(expression_matrix != 0, axis=0))[0]
+        filtered_matrix = expression_matrix[:, non_zero]
+
+        # Generate the PCA components
+        pca = PCA(n_components=c.NUMBER_COMPONENTS)
+        data_pca = pca.fit_transform(filtered_matrix)
+
+        # UI
+        print(f"{c.NUMBER_COMPONENTS} PCA components have been generated...")
+
+        self.save_plots(data_pca, analysis="pca")
 
     def svd_analysis(self):
+        """
+        Performs an SVD analysis for the provided data.
+        """
+        # Generate the SVD components
         svd = TruncatedSVD(n_components=c.NUMBER_COMPONENTS)
-        data_svd = svd.fit_transform(self.adata)
+        data_svd = svd.fit_transform(self.adata.X)
 
-        plots = []
-        for idx, component in enumerate(data_svd):
-            plots.append()
+        # UI
+        print(f"{c.NUMBER_COMPONENTS} SVD components have been generated...")
+
+        self.save_plots(data_svd, analysis="svd")

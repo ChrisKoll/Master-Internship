@@ -4,11 +4,11 @@ from typing import Optional
 # Third-party library imports
 from anndata import AnnData
 
-# Local/application-specific import
-from src import model
+# Local import
+import src.heart_model.model as mod
 
 
-def train(data: AnnData, vae: Optional[model.VariationalAutoencoder] = None, donors: Optional[list[str]] = None,
+def train(data: AnnData, vae: Optional[mod.VariationalAutoencoder] = None, donors: Optional[set[str]] = None,
           *, epochs: int, device: str):
     """
     :param vae: Model architecture to be trained
@@ -18,7 +18,7 @@ def train(data: AnnData, vae: Optional[model.VariationalAutoencoder] = None, don
     :param device: Provides the device for training
     :return: Returns the trained VAE model
     """
-    # Shuffle the dataset ?
+    # Shuffle the dataset?
 
     for fold, donor in enumerate(donors):
         print(f"Fold {fold + 1}/{len(donors)}")
@@ -34,8 +34,3 @@ def train(data: AnnData, vae: Optional[model.VariationalAutoencoder] = None, don
         val_dataset = GeneExpressionDataset(gene_expression[val_indices])
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
         val_loader = DataLoader(val_dataset, batch_size=batch_size)
-
-        # Create model instance
-        model = VAE(input_dim, latent_dim)
-        optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-        criterion = nn.MSELoss()
