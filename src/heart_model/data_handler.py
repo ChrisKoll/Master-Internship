@@ -50,13 +50,13 @@ class Handler:
         subset = self.adata[:number_cols, :number_rows]
         subset.write_h5ad(Path(export_path))
 
-    def get_donors(self) -> set[str]:
+    def get_donors(self) -> list[str]:
         """
         Returns all sample donors.
 
         :return: Set of donors
         """
-        donors = set(self.adata.obs["donor"])
+        donors = list(set(self.adata.obs["donor"]))
 
         return donors
 

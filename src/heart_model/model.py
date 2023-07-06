@@ -6,13 +6,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as f
 
-
-# Layer size
-# 33538 (input size) * 1/3
-SIZE_LAYER_ONE = 10062
-SIZE_LAYER_TWO = 3018
-SIZE_LAYER_THREE = 906
-SIZE_LATENT_SPACE = 200
+# Local imports
+import src.heart_model.constants as c
 
 
 class VariationalEncoder(nn.Module):
@@ -33,12 +28,12 @@ class VariationalEncoder(nn.Module):
         self.normal_distribution.scale = self.normal_distribution.scale.cuda()
 
         # Model architecture
-        self.input_layer = nn.Linear(input_dims, SIZE_LAYER_ONE)
-        self.hidden_layer1 = nn.Linear(SIZE_LAYER_ONE, SIZE_LAYER_TWO)
-        self.hidden_layer2 = nn.Linear(SIZE_LAYER_TWO, SIZE_LAYER_THREE)
+        self.input_layer = nn.Linear(input_dims, c.SIZE_LAYER_ONE)
+        self.hidden_layer1 = nn.Linear(c.SIZE_LAYER_ONE, c.SIZE_LAYER_TWO)
+        self.hidden_layer2 = nn.Linear(c.SIZE_LAYER_TWO, c.SIZE_LAYER_THREE)
         # Latent space for mean and standard deviation
-        self.latent_space1 = nn.Linear(SIZE_LAYER_THREE, SIZE_LATENT_SPACE)
-        self.latent_space2 = nn.Linear(SIZE_LAYER_THREE, SIZE_LATENT_SPACE)
+        self.latent_space1 = nn.Linear(c.SIZE_LAYER_THREE, c.SIZE_LATENT_SPACE)
+        self.latent_space2 = nn.Linear(c.SIZE_LAYER_THREE, c.SIZE_LATENT_SPACE)
 
     def forward(self, x):
         """
@@ -81,10 +76,10 @@ class Decoder(nn.Module):
         super().__init__()
 
         # Model architecture
-        self.input_layer = nn.Linear(SIZE_LATENT_SPACE, SIZE_LAYER_THREE)
-        self.hidden_layer1 = nn.Linear(SIZE_LAYER_THREE, SIZE_LAYER_TWO)
-        self.hidden_layer2 = nn.Linear(SIZE_LAYER_TWO, SIZE_LAYER_ONE)
-        self.output_layer = nn.Linear(SIZE_LAYER_ONE, output_dims)
+        self.input_layer = nn.Linear(c.SIZE_LATENT_SPACE, c.SIZE_LAYER_THREE)
+        self.hidden_layer1 = nn.Linear(c.SIZE_LAYER_THREE, c.SIZE_LAYER_TWO)
+        self.hidden_layer2 = nn.Linear(c.SIZE_LAYER_TWO, c.SIZE_LAYER_ONE)
+        self.output_layer = nn.Linear(c.SIZE_LAYER_ONE, output_dims)
 
     def forward(self, z, *, number_samples, number_genes):
         """
