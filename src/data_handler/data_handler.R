@@ -131,6 +131,10 @@ if ("--stat" %in% args) {
     
     stat_arg <- TRUE
             
+} else {
+  
+  stat_arg <- FALSE
+  
 }
 
 if (file.exists(path_arg)) {

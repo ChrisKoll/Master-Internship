@@ -21,11 +21,6 @@ class VariationalEncoder(nn.Module):
         :param input_dims: Dimension of input vector
         """
         super().__init__()
-        self.kullback_leibler_divergence = None
-        self.normal_distribution = torch.distributions.Normal(0, 1)
-        # Hack to get sampling on the GPU
-        self.normal_distribution.loc = self.normal_distribution.loc.cuda()
-        self.normal_distribution.scale = self.normal_distribution.scale.cuda()
 
         # Model architecture
         self.input_layer = nn.Linear(input_dims, c.SIZE_LAYER_ONE)
@@ -43,24 +38,21 @@ class VariationalEncoder(nn.Module):
         :return: Returns latent space z
         """
         # Reduce input tensor to 1 dimension
-        x = torch.flatten(x, start_dim=1)
-        # ReLu activation
-        x = f.relu(self.input_layer(x))
-        x = f.relu(self.hidden_layer1(x))
-        x = f.relu(self.hidden_layer2(x))
+        # x = torch.flatten(x, start_dim=1)
+        # ReLU activation
+        output = f.relu(self.input_layer(x))
+        output = f.relu(self.hidden_layer1(output))
+        output = f.relu(self.hidden_layer2(output))
 
         # Mean vector
-        mu = self.latent_space1(x)
+        mu = self.latent_space1(output)
         # Vector of standard deviation
         # Exponential activation
-        sigma = torch.exp(self.latent_space2(x))
+        sigma = torch.exp(self.latent_space2(output))
         # Combined latent space
         z = mu + sigma * self.N.sample(mu.shape)
 
-        # Adjust Kullback-Leibler
-        self.kullback_leibler_divergence = (sigma ** 2 + mu ** 2 - torch.log(sigma) - 1 / 2).sum()
-
-        return z
+        return z, mu, sigma
 
 
 class Decoder(nn.Module):
@@ -90,13 +82,13 @@ class Decoder(nn.Module):
         :param number_genes: Number of genes for output reshape
         :return: Original representation of the data
         """
-        # ReLu activation
-        z = f.relu(self.input_layer(z))
-        z = f.relu(self.hidden_layer1(z))
-        z = f.relu(self.hidden_layer2(z))
-        z = self.output_layer(z)
+        # ReLU activation
+        output = f.relu(self.input_layer(z))
+        output = f.relu(self.hidden_layer1(output))
+        output = f.relu(self.hidden_layer2(output))
+        output = self.output_layer(output)
 
-        return z.reshape((number_samples, number_genes))
+        return output.reshape((number_samples, number_genes))
 
 
 class VariationalAutoencoder(nn.Module):

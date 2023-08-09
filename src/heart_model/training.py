@@ -6,61 +6,93 @@ from typing import Optional
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.optim as optim
 from torch.utils.data import DataLoader
 
 # Local import
 import src.heart_model.model as mod
 
 
-class Training:
+class Trainer:
 
-    def __int__(self, adata: np.matrix, vae: mod.VariationalAutoencoder, donors: Optional[list[str]] = None):
+    def __init__(self, adata: torch.Tensor, vae: mod.VariationalAutoencoder, donors: list[str]):
+        """Constructor:
+
+        Docstring
+        """
         self.adata = adata
         self.vae = vae
         self.donors = donors
 
-    def create_fold(self, idx: int, *, batch_size: int, learning_rate: float):
+    @staticmethod
+    def kullback_leibler_divergence(z, mu, std):
+        """
+        Docstring
+        """
+        # Assume normal distributions
+        p = torch.distributions.Normal(torch.zeros_like(mu), torch.ones_like(std))
+        q = torch.distributions.Normal(mu, std)
 
+        log_qzx = q.log_prob(z)
+        log_pz = p.log_prob(z)
+
+        # Kullback-Leibler
+        kl = log_qzx - log_pz
+        kl = kl.sum(-1)
+
+        return kl
+
+    def create_fold(self, idx: int, *, batch_size: int):
+        """
+        Docstring
+        """
+        # Random choice for donor
         donor = choice(self.donors)
-
+        # Compute the indices of all samples in the validation set
         val_indices = np.where(self.adata[:, idx] == donor)[0]
 
-        # Create dataset and data loaders
+        # Subset dataset
         train_dataset = self.adata[~np.isin(self.adata, val_indices)]
         val_dataset = self.adata[val_indices]
+
+        # Create dataloaders
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-        val_loader = DataLoader(val_dataset, batch_size=batch_size)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
-        # Create model instance
-        optimizer = optim.Adam(self.vae.parameters(), lr=learning_rate)
-        criterion = nn.MSELoss()
+        return train_loader, val_loader
 
-        return train_loader, val_loader, optimizer, criterion
-
-    def train_epoch(self, train_loader: DataLoader, val_loader: DataLoader, optimizer, criterion):
+    def train_step(self, train_loader: DataLoader, val_loader: DataLoader, optimizer, criterion):
+        """
+        Docstring
+        """
         self.vae.train()
         train_loss = 0.0
 
         for batch in train_loader:
-            optimizer.zero_grad()
-            recon_batch, mu, log_var = self.vae(batch)
+
+            recon_batch, mu, log_var = self.vae(batch).encoder
+
+            std = torch.exp(log_var / 2)
+            q = torch.distributions.Normal(mu, std)
+            z = q.rsample()
+
+            x_hat = self.vae()
 
             # Compute reconstruction loss and KL divergence loss
             reconstruction_loss = criterion(recon_batch, batch)
             kl_divergence_loss = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
 
             # Total loss
-            loss = reconstruction_loss + kl_divergence_loss
+            # loss = reconstruction_loss + kl_divergence_loss
 
             # Backpropagation and optimization
-            loss.backward()
+            reconstruction_loss.backward()
             optimizer.step()
+            optimizer.zero_grad()
 
-            train_loss += loss.item()
+            train_loss += reconstruction_loss.item()
 
         # Compute average training loss
-        train_loss /= len(train_loader)
+        # train_loss /= len(train_loader)
 
         # Evaluation on validation set
         self.vae.eval()
@@ -68,7 +100,7 @@ class Training:
 
         with torch.no_grad():
             for batch in val_loader:
-                recon_batch, mu, log_var = self.vae(batch)
+                recon_batch = self.vae(batch)
                 loss = criterion(recon_batch, batch)
                 val_loss += loss.item()
 
@@ -77,15 +109,20 @@ class Training:
 
         return train_loss, val_loss
 
-    def train(self, *, epochs: int, batch_size: int, learning_rate: float, device: str):
-        # Shuffle the dataset?
+    def train(self, *, epochs: int, batch_size: int, learning_rate: float):
+        """
+        Docstring
+        """
+        # Define optimizer and loss function
+        optimizer = torch.optim.Adam(self.vae.parameters(), lr=learning_rate)
+        criterion = nn.MSELoss()
 
-        for idx, donor in enumerate(self.donors):
+        # Iterate over donors
+        for idx, _ in enumerate(self.donors):
 
             print(f"Fold {idx + 1}/{len(self.donors)}")
 
-            train_loader, val_loader, optimizer, criterion = self.create_fold(idx, batch_size=batch_size,
-                                                                              learning_rate=learning_rate)
+            train_loader, val_loader = self.create_fold(idx, batch_size=batch_size)
 
             # Training loop
             for epoch in range(epochs):

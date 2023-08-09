@@ -5,6 +5,7 @@ from typing import Optional
 
 # Third-party library imports
 from anndata import AnnData
+import numpy as np
 from scanpy import read_h5ad
 from torch import torch
 
@@ -21,6 +22,7 @@ class Handler:
         """
         self.file_location = file_location
         self.file_name: Optional[str] = None
+        self.expression_matrix: Optional[np.matrix] = None
         self.adata = self.read_data()
 
     def read_data(self) -> AnnData:
@@ -34,6 +36,10 @@ class Handler:
         else:
             self.file_name = self.file_location.split("\\")[-1].split(".")[0]
             annotated_data = read_h5ad(filename=self.file_location)
+
+            # Extract expression matrix
+            self.expression_matrix = np.array(annotated_data.X)
+            print(self.expression_matrix)
 
             return annotated_data
 
@@ -66,6 +72,6 @@ class Handler:
 
         :return: Anndata tensor
         """
-        tensor_data = torch.tensor(self.adata.X)
+        tensor_data = torch.tensor(self.expression_matrix)
 
         return tensor_data

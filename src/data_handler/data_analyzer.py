@@ -11,7 +11,7 @@ from scanpy import read_h5ad
 from sklearn.decomposition import TruncatedSVD, PCA
 
 # Local import
-import constants as c
+import src.heart_model.constants as c
 
 
 class Analyzer:
