@@ -50,7 +50,7 @@ class VariationalEncoder(nn.Module):
         # Exponential activation
         sigma = torch.exp(self.latent_space2(output))
         # Combined latent space
-        z = mu + sigma * self.N.sample(mu.shape)
+        z = torch.distributions.Normal(mu, sigma)
 
         return z, mu, sigma
 
@@ -113,6 +113,6 @@ class VariationalAutoencoder(nn.Module):
         :param x: Data tensor
         :return: Returns original data representation
         """
-        z = self.encoder(x)
+        z, mu, sigma = self.encoder(x)
 
-        return self.decoder(z)
+        return self.decoder(z), mu, sigma

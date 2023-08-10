@@ -1,6 +1,6 @@
 # Standard library imports
+from datetime import datetime
 from random import choice
-from typing import Optional
 
 # Third-party library imports
 import numpy as np
@@ -22,6 +22,21 @@ class Trainer:
         self.adata = adata
         self.vae = vae
         self.donors = donors
+
+        self.log_scale = nn.Parameter(torch.Tensor([0.0]))
+
+    @staticmethod
+    def gaussian_likelihood(x_hat, log_scale, x):
+        """
+        Docstring
+        """
+        scale = torch.exp(log_scale)
+        mean = x_hat
+        dist = torch.distributions.Normal(mean, scale)
+
+        log_pxz = dist.log_prob(x)
+
+        return log_pxz.sum(dim=(1, 2, 3))
 
     @staticmethod
     def kullback_leibler_divergence(z, mu, std):
@@ -61,77 +76,75 @@ class Trainer:
 
         return train_loader, val_loader
 
-    def train_one_epoch(self):
-
-
-    def train_step(self, train_loader: DataLoader, val_loader: DataLoader, optimizer, criterion):
+    def train_one_epoch(self, train_loader: DataLoader, optimizer, loss_function):
         """
         Docstring
         """
-        self.vae.train()
-        train_loss = 0.0
+        running_loss = 0.
+        last_loss = 0.
 
-        for batch in train_loader:
+        for i, data in enumerate(train_loader):
+            x, labels = data
 
-            recon_batch, mu, log_var = self.vae(batch).encoder
-
-            std = torch.exp(log_var / 2)
-            q = torch.distributions.Normal(mu, std)
-            z = q.rsample()
-
-            x_hat = self.vae()
-
-            # Compute reconstruction loss and KL divergence loss
-            reconstruction_loss = criterion(recon_batch, batch)
-            kl_divergence_loss = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
-
-            # Total loss
-            # loss = reconstruction_loss + kl_divergence_loss
-
-            # Backpropagation and optimization
-            reconstruction_loss.backward()
-            optimizer.step()
+            # Zero gradients for every batch
             optimizer.zero_grad()
 
-            train_loss += reconstruction_loss.item()
+            x_hat, mu, log_var = self.vae(x)
 
-        # Compute average training loss
-        # train_loss /= len(train_loader)
+            # Reconstruction loss
+            reconstruction_loss = loss_function(x_hat, self.log_scale, x)
+            loss.backward()
 
-        # Evaluation on validation set
-        self.vae.eval()
-        val_loss = 0.0
+            # Adjust learning weights
+            optimizer.step()
 
-        with torch.no_grad():
-            for batch in val_loader:
-                recon_batch = self.vae(batch)
-                loss = criterion(recon_batch, batch)
-                val_loss += loss.item()
+            # Gather data and report
+            running_loss += loss.item()
+            if i % 1000 == 999:
+                # Loss per batch
+                last_loss = running_loss / 1000
+                print(f"Batch {i + 1} loss: {last_loss}")
+                running_loss = 0.
 
-        # Compute average validation loss
-        val_loss /= len(val_loader)
+            return last_loss
 
-        return train_loss, val_loss
-
-    def train(self, *, epochs: int, batch_size: int, learning_rate: float):
+    def fit(self, *, epochs: int, batch_size: int, learning_rate: float):
         """
         Docstring
         """
+        best_val_loss = 1_000_000.
+
         # Define optimizer and loss function
         optimizer = torch.optim.Adam(self.vae.parameters(), lr=learning_rate)
-        criterion = nn.MSELoss()
+        loss_function = nn.MSELoss()
 
         # Iterate over donors
         for idx, _ in enumerate(self.donors):
-
             print(f"Fold {idx + 1}/{len(self.donors)}")
 
             train_loader, val_loader = self.create_fold(idx, batch_size=batch_size)
 
             # Training loop
-            for epoch in range(epochs):
+            for epoch_number in range(epochs):
+                self.vae.train(True)
+                avg_loss = self.train_one_epoch(train_loader, optimizer=optimizer, loss_function=loss_function)
 
-                train_loss, val_loss = self.train_epoch(train_loader, val_loader, optimizer, criterion)
+                running_val_loss = 0.
+                self.vae.eval()
 
-                # Print epoch statistics
-                print(f"Epoch [{epoch + 1}/{epochs}], Train Loss: {train_loss}, Val Loss: {val_loss}")
+                with torch.no_grad():
+                    for i, val_data in enumerate(val_loader):
+                        val_inputs, val_labels = val_data
+                        val_outputs = self.vae(val_inputs)
+                        val_loss = loss_function(val_outputs, val_labels)
+                        running_val_loss += val_loss
+
+                avg_val_loss = running_val_loss / (i + 1)
+
+                print(f"Loss: training {avg_loss}, validation {avg_val_loss}")
+
+                if avg_val_loss < best_val_loss:
+                    best_val_loss = avg_val_loss
+                    timestamp = datetime.now().strftime("%Y%m%a_%H%M%S")
+                    model_path = f"model_{timestamp}_{epoch_number + 1}"
+                    torch.save(self.vae.state_dict(), model_path)
