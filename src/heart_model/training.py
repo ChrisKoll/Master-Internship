@@ -55,10 +55,14 @@ class Trainer:
         val_dataset = self.adata[val_indices]
 
         # Create dataloaders
+        # --> Look at num workers
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
         val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
         return train_loader, val_loader
+
+    def train_one_epoch(self):
+
 
     def train_step(self, train_loader: DataLoader, val_loader: DataLoader, optimizer, criterion):
         """
