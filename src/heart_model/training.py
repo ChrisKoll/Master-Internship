@@ -56,16 +56,6 @@ class Trainer:
 
         return kl
 
-    @staticmethod
-    def gaussian_likelihood(x_hat, locscale, x):
-        scale = torch.exp(locscale)
-        mean = x_hat
-        dist = torch.distributions.Normal(mean, scale)
-
-        log_qxz = dist.log_prob(x)
-
-        return log_qxz.sum(dim=(1, 2, 3))
-
     def create_fold(self, idx: int, *, batch_size: int):
         """
         Docstring
