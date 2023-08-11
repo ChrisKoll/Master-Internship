@@ -76,7 +76,7 @@ class Trainer:
 
         return train_loader, val_loader
 
-    def train_one_epoch(self, train_loader: DataLoader, optimizer, loss_function):
+    def train_one_epoch(self, train_loader: DataLoader, optimizer):
         """
         Docstring
         """
@@ -92,8 +92,8 @@ class Trainer:
             x_hat, mu, log_var = self.vae(x)
 
             # Reconstruction loss
-            reconstruction_loss = loss_function(x_hat, self.log_scale, x)
-            loss.backward()
+            reconstruction_loss = self.gaussian_likelihood(x_hat, self.log_scale, x)
+            reconstruction_loss.backward()
 
             # Adjust learning weights
             optimizer.step()
