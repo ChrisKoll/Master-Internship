@@ -18,3 +18,8 @@ SIZE_LATENT_SPACE = 200
 NUM_EPOCHS = 10
 BATCH_SIZE = 100
 LEARNING_RATE = 0.01
+
+
+# === Strings ===
+PROGRAM_NAME = "Classification Heart Model - CHM"
+PROGRAM_DESCRIPTION = "Provides methods to analyze or normalize data, used for training a classification model."

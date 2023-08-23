@@ -43,18 +43,28 @@ class Handler:
 
             return annotated_data
 
-    def subset_adata(self, export_path: str = None, *, number_rows: int = 5000, number_cols: int = 5000):
+    def subset_adata(self, export_path: Optional[str] = None, *,
+                     number_rows: int = 5000,
+                     number_cols: int = 5000,
+                     shuffle: bool = True):
         """
         Subsets a given anndata object to a given size.
 
         :param export_path: Path for the file to be exported
         :param number_rows: Number of rows kept in the subset
         :param number_cols: Number of columns kept in the subset
+        :param shuffle: Decides if the rows in the matrix are shuffled
         """
         if export_path is None:
             export_path = f"{self.file_name}_{number_rows}x{number_cols}_sample.h5ad"
-        subset = self.adata[:number_cols, :number_rows]
-        subset.write_h5ad(Path(export_path))
+        if shuffle is True:
+            adata = self.adata
+            np.random.shuffle(adata)
+            subset = adata[:number_cols, :number_rows]
+            subset.write_h5ad(Path(export_path))
+        else:
+            subset = self.adata[:number_cols, :number_rows]
+            subset.write_h5ad(Path(export_path))
 
     def get_donors(self) -> list[str]:
         """

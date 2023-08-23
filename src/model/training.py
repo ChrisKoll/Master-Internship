@@ -99,7 +99,7 @@ class Trainer:
             optimizer.step()
 
             # Gather data and report
-            running_loss += loss.item()
+            running_loss += reconstruction_loss.item()
             if i % 1000 == 999:
                 # Loss per batch
                 last_loss = running_loss / 1000
@@ -127,7 +127,7 @@ class Trainer:
             # Training loop
             for epoch_number in range(epochs):
                 self.vae.train(True)
-                avg_loss = self.train_one_epoch(train_loader, optimizer=optimizer, loss_function=loss_function)
+                avg_loss = self.train_one_epoch(train_loader, optimizer=optimizer)
 
                 running_val_loss = 0.
                 self.vae.eval()
