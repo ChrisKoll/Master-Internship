@@ -3,7 +3,7 @@ import argparse
 
 # Local imports
 import src.constants as const
-import src.data_handler as dh
+import src.handler as dh
 
 
 def main(arguments):

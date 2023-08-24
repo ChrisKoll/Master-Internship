@@ -4,17 +4,17 @@ from typing import Optional
 
 # Third-party library imports
 from anndata import AnnData
+from fpdf import FPDF
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
-from scanpy import read_h5ad
 from sklearn.decomposition import TruncatedSVD, PCA
 
 # Local import
-import src.heart_model.constants as c
+import src.constants as const
 
 
-class Analyzer:
+class Analyst:
     """
     Analyzes a given dataset with different statistical analysis methods.
     """
