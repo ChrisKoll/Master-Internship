@@ -9,6 +9,8 @@ import numpy as np
 from scanpy import read_h5ad
 from torch import torch
 
+import src.analyst
+
 
 class Handler:
     """
@@ -65,6 +67,15 @@ class Handler:
         else:
             subset = self.adata[:number_cols, :number_rows]
             subset.write_h5ad(Path(export_path))
+
+    def data_analysis(self, *args):
+        """
+        Docstring
+        """
+        analyst = src.analyst.Analyst(self.adata)
+
+        if "statistics" in args:
+            analyst.plot_expression()
 
     def get_donors(self) -> list[str]:
         """
