@@ -2,6 +2,16 @@
 Contains all constant values
 """
 
+# === analyst.py ===
+OBS_DONOR = "donor"
+PLOT_TITLE_DONOR_DIST = "Sample Distribution per Donor"
+OBS_CELL_TYPE = "cell_type"
+PLOT_TITLE_CELL_TYPE_DIST = "Sample Distribution per Cell Type"
+LABEL1_0_EXP = "0 Expression Genes"
+LABEL2_0_EXP = "Other Genes"
+PLOT_TITLE_0_EXP = "Expression Overview"
+FILE_DESTINATION = "tmp"
+
 # === Analysis ===
 NUMBER_COMPONENTS = 4
 
