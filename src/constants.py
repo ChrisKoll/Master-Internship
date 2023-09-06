@@ -12,6 +12,9 @@ LABEL2_0_EXP = "Other Genes"
 PLOT_TITLE_0_EXP = "Expression Overview"
 FILE_DESTINATION = "tmp"
 
+# === normaliser.py ===
+CPM_SCALING_FACT = 1e6
+
 # === Analysis ===
 NUMBER_COMPONENTS = 4
 
@@ -28,7 +31,6 @@ SIZE_LATENT_SPACE = 200
 NUM_EPOCHS = 10
 BATCH_SIZE = 100
 LEARNING_RATE = 0.01
-
 
 # === Strings ===
 PROGRAM_NAME = "Classification Heart Model - CHM"

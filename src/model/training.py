@@ -9,7 +9,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 # Local import
-import src.heart_model.model as mod
+import model.model as mod
 
 
 class Trainer:

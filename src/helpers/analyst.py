@@ -23,8 +23,6 @@ class Analyst:
         :param adata: AnnData object
         """
         self.adata = adata
-        # Extracts the count data
-        self.bdata = self.adata.to_df()
 
     def statistical_analysis(self):
         """
@@ -40,29 +38,24 @@ class Analyst:
 
         # Creates pie plot
         # --> Expression distribution for all 0 genes
-        self.plot_0_expression()
+        # self.plot_0_expression()
 
     def plot_donor_distribution(self):
         """
         Plots the amount of samples per donor in the AnnData object.
         """
-        # Empty dict to save distribution
-        donor_distribution = {}
-        for sample in self.adata.obs_names:
-            # Determines donor for sample
-            # --> Returns value for sample as dataframe
-            donor = self.adata[sample].obs[const.OBS_DONOR][0]
-            if donor in donor_distribution.keys():
-                donor_distribution[donor] += 1
-            else:
-                donor_distribution[donor] = 1
+        # List of unique donors
+        # --> Act as labels for the plot
+        labels = self.adata.obs["donor"].unique()
 
-        # Calculate plotting parameters
-        labels = list(donor_distribution.keys())
-        sizes = list(donor_distribution.values())
-        # Calculate percentages
-        total = sum(sizes)
-        percentages = [((size / total) * 100) for size in sizes]
+        # Returns the amount of samples the condition fits
+        # --> Act as sizes for the plot
+        sizes = []
+        for donor in labels:
+            sizes.append(self.adata[self.adata.obs["donor"] == donor].shape[0])
+
+        # Calculate percentages for visualization
+        percentages = self.calculate_percentages(sizes=sizes)
 
         self.plot_pie(labels=labels, sizes=sizes, percentages=percentages, title=const.PLOT_TITLE_DONOR_DIST)
 
@@ -70,25 +63,31 @@ class Analyst:
         """
         Plots the amount of samples per cell type in the AnnData object.
         """
-        # Empty dict to save distribution
-        cell_type_distribution = {}
-        for sample in self.adata.obs_names:
-            # Determines cell type for sample
-            # --> Returns value for sample as dataframe
-            cell_type = self.adata[sample].obs[const.OBS_CELL_TYPE][0]
-            if cell_type in cell_type_distribution.keys():
-                cell_type_distribution[cell_type] += 1
-            else:
-                cell_type_distribution[cell_type] = 1
+        # List of unique cell types
+        # --> Act as labels for the plot
+        labels = self.adata.obs["cell_type"].unique()
 
-        # Calculate plotting parameters
-        labels = list(cell_type_distribution.keys())
-        sizes = list(cell_type_distribution.values())
-        # Calculate percentages
-        total = sum(sizes)
-        percentages = [((size / total) * 100) for size in sizes]
+        # Returns the amount of samples the condition fits
+        # --> Act as sizes for the plot
+        sizes = []
+        for cell_type in labels:
+            sizes.append(self.adata[self.adata.obs[const.OBS_CELL_TYPE] == cell_type].shape[0])
+
+        # Calculate percentages for visualization
+        percentages = self.calculate_percentages(sizes=sizes)
 
         self.plot_pie(labels=labels, sizes=sizes, percentages=percentages, title=const.PLOT_TITLE_CELL_TYPE_DIST)
+
+    def calculate_percentages(self, sizes: list[int]) -> list[float]:
+        """
+        Calculates percentages.
+        """
+        # Get total amount of samples
+        total = self.adata.obs_names.shape[0]
+
+        percentages = [((size / total) * 100) for size in sizes]
+
+        return percentages
 
     def plot_0_expression(self):
         """

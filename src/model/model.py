@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as f
 
 # Local imports
-import src.heart_model.constants as c
+import constants as c
 
 
 class VariationalEncoder(nn.Module):
