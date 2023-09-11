@@ -1,22 +1,11 @@
 """
-Contains all constant values
+Contains all constant values.
 """
 
-# === analyst.py ===
-OBS_DONOR = "donor"
-PLOT_TITLE_DONOR_DIST = "Sample Distribution per Donor"
-OBS_CELL_TYPE = "cell_type"
-PLOT_TITLE_CELL_TYPE_DIST = "Sample Distribution per Cell Type"
-LABEL1_0_EXP = "0 Expression Genes"
-LABEL2_0_EXP = "Other Genes"
-PLOT_TITLE_0_EXP = "Expression Overview"
-FILE_DESTINATION = "tmp"
 
-# === normaliser.py ===
-CPM_SCALING_FACT = 1e6
-
-# === Analysis ===
-NUMBER_COMPONENTS = 4
+# |=============|
+# |-- model.py --|
+# |=============|
 
 # === Model ===
 # Layer size
@@ -27,11 +16,25 @@ SIZE_LAYER_TWO = 3018
 SIZE_LAYER_THREE = 906
 SIZE_LATENT_SPACE = 200
 
-# Hyperparameters
+# == Hyperparameters ==
 NUM_EPOCHS = 10
 BATCH_SIZE = 100
 LEARNING_RATE = 0.01
 
-# === Strings ===
-PROGRAM_NAME = "Classification Heart Model - CHM"
-PROGRAM_DESCRIPTION = "Provides methods to analyze or normalize data, used for training a classification model."
+
+# |=============|
+# |-- util.py --|
+# |=============|
+
+# == Statistical analysis ==
+ARGUMENT_COLLECTION_PERCENTAGES = {"samples", "genes"}
+LABEL1_0_EXP = "0 Expression Genes"
+LABEL2_0_EXP = "Other Genes"
+OBS_CELL_TYPE = "cell_type"
+OBS_DONOR = "donor"
+PLOT_TITLE_0_EXP = "Expression Overview"
+PLOT_TITLE_CELL_TYPE_DIST = "Sample Distribution per Cell Type"
+PLOT_TITLE_DONOR_DIST = "Sample Distribution per Donor"
+
+# == Normalization ==
+CPM_SCALING_FACT = 1e6
