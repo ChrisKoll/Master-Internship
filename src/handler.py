@@ -4,13 +4,12 @@ from scipy import sparse
 
 # == Standard ==
 from os import path
-from typing import Optional
 
 # == Third-party ==
 from anndata import AnnData, read_h5ad
 
 # == Local imports ==
-from helpers.analyst import Analyst
+import util
 
 
 class Handler:
@@ -24,7 +23,7 @@ class Handler:
         :param file_location: Path to h5ad file
         """
         self.file_location = file_location
-        self.adata: Optional[AnnData] = None
+        self.adata: AnnData
 
         # Read the h5ad file
         self.read_data()
@@ -38,38 +37,33 @@ class Handler:
         if not path.exists(self.file_location):
             raise ValueError("Invalid file path.")
         else:
-            self.adata = read_h5ad(filename=self.file_location, backed='r+')
+            self.adata = read_h5ad(filename=self.file_location)
 
-    def data_analysis(self):
+    def statistical_analysis(self):
         """
-        Start different analysis methods for data analysis.
+        Plots a number of statistical features.
         """
-        # Create Analyst object (analyst.py)
-        analyst = Analyst(self.adata)
-        analyst.statistical_analysis()
+        # Creates pie plot
+        # --> Amount of samples per donor
+        util.plot_donor_distribution(adata=self.adata)
 
-    def test_function(self):
-        for _, idx in enumerate(self.adata.var_names):
-            print(idx)
-            test = self.adata[:10, idx].X
-            print(test != 0.0)
-            """
-            if test is None:
-                print("0er")
-            else:
-                print(idx)
-            """
-        # print(self.adata[0, 0].X)
-        # zero_columns_idx = np.where(np.all(self.adata.X == 0.0, axis=0))
-        # print(zero_columns_idx)
+        # Creates pie plot
+        # --> Amount of samples per cell type
+        util.plot_cell_type_distribution(adata=self.adata)
 
+        # Creates pie plot
+        # --> Expression distribution for all 0 genes
+        util.plot_0_expression(adata=self.adata)
 
-if __name__ == '__main__':
-    # file = "/media/sf_Share/Schulzlab/global_raw.h5ad"
-    file = "/home/ubuntu/Projects/Master-Internship/data/global_raw_5000x5000_sample.h5ad"
-    handler = Handler(file_location=file)
-    handler.test_function()
-    # handler.data_analysis()
-    # sparse_matrix = sparse.csr_matrix(handler.adata.X)
-
-
+    def normalize(self):
+        """
+        Normalizes the data after a given format.
+        """
+        # Count Per Million normalization
+        self.adata.layers["cpm_normalized"] = util.count_per_million_normalization(
+            self.adata.X
+        )
+        # Use Min-Max normalization to bring data in range of 0 - 1
+        self.adata.layers["cpm_minmax_normalized"] = util.min_max_normalization(
+            self.adata.layers["cpm_normalized"]
+        )
