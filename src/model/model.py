@@ -10,45 +10,6 @@ import torch.nn.functional as f
 import constants as c
 
 
-class Encoder(nn.Module):
-    """
-    Class containing the encoder.
-    """
-
-    def __init__(self, input_dims: int):
-        """Constructor
-
-        :param input_dims: Dimension of input vector
-        """
-        super().__init__()
-
-        # Model architecture
-        self.input_layer = nn.Linear(input_dims, c.SIZE_LAYER_ONE)
-        self.hidden_layer1 = nn.Linear(c.SIZE_LAYER_ONE, c.SIZE_LAYER_TWO)
-        self.hidden_layer2 = nn.Linear(c.SIZE_LAYER_TWO, c.SIZE_LAYER_THREE)
-        # Latent space
-        self.latent_space = nn.Linear(c.SIZE_LAYER_THREE, c.SIZE_LATENT_SPACE)
-
-        def forward(self, x):
-            """
-            Forward function for the encoder model.
-
-            :param x: Data tensor
-            :return: Returns latent space z
-            """
-            # Reduce input tensor to 1 dimension
-            # x = torch.flatten(x, start_dim=1)
-            # ReLU activation
-            output = f.relu(self.input_layer(x))
-            output = f.relu(self.hidden_layer1(output))
-            output = f.relu(self.hidden_layer2(output))
-
-            # Reconstructed input
-            z = self.latent_space1(output)
-
-            return z
-
-
 class VariationalEncoder(nn.Module):
     """
     Class containing the variational encoder.
@@ -128,33 +89,6 @@ class Decoder(nn.Module):
         output = self.output_layer(output)
 
         return output.reshape((number_samples, number_genes))
-
-
-class Autoencoder(nn.Module):
-    """
-    Class containing the whole autoencoder.
-    """
-
-    def __init__(self, size_input_vector: int):
-        """Constructor
-
-        :param size_input_vector: Size of the input vector
-        """
-        super().__init__()
-
-        self.input_size = size_input_vector
-        self.encoder = Encoder(size_input_vector)
-        self.decoder = Decoder(size_input_vector)
-
-    def forward(self, x):
-        """
-
-        :param x: Data tensor
-        :return: Returns original data representation
-        """
-        z = self.encoder(x)
-
-        return self.decoder(z)
 
 
 class VariationalAutoencoder(nn.Module):

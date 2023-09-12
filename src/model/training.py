@@ -7,18 +7,16 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from anndata.experimental.pytorch import AnnLoader
 
 # Local import
 import model.model as mod
 
 
 class Trainer:
-    def __init__(
-        self, adata: torch.Tensor, vae: mod.VariationalAutoencoder, donors: list[str]
-    ):
-        """Constructor:
 
+    def __init__(self, adata: torch.Tensor, vae: mod.VariationalAutoencoder, donors: list[str]):
+        """Constructor:
+        
         Docstring
         """
         self.adata = adata
@@ -82,8 +80,8 @@ class Trainer:
         """
         Docstring
         """
-        running_loss = 0.0
-        last_loss = 0.0
+        running_loss = 0.
+        last_loss = 0.
 
         for i, data in enumerate(train_loader):
             x, labels = data
@@ -106,7 +104,7 @@ class Trainer:
                 # Loss per batch
                 last_loss = running_loss / 1000
                 print(f"Batch {i + 1} loss: {last_loss}")
-                running_loss = 0.0
+                running_loss = 0.
 
             return last_loss
 
@@ -114,7 +112,7 @@ class Trainer:
         """
         Docstring
         """
-        best_val_loss = 1_000_000.0
+        best_val_loss = 1_000_000.
 
         # Define optimizer and loss function
         optimizer = torch.optim.Adam(self.vae.parameters(), lr=learning_rate)
@@ -131,7 +129,7 @@ class Trainer:
                 self.vae.train(True)
                 avg_loss = self.train_one_epoch(train_loader, optimizer=optimizer)
 
-                running_val_loss = 0.0
+                running_val_loss = 0.
                 self.vae.eval()
 
                 with torch.no_grad():
