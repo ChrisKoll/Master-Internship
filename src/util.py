@@ -16,9 +16,31 @@ from sklearn.decomposition import TruncatedSVD, PCA
 import constants as const
 
 
-# |===================|
+# |=============|
 # |-- Helpers --|
-# |===================|
+# |=============|
+
+
+def plot_loss(losses: dict, file_name: str):
+    """
+    Docstring
+    """
+    fig, ax = plt.subplots()
+
+    # Plot each epoch's loss values as a curve
+    for epoch, loss_values in losses.items():
+        ax.plot(range(1, len(loss_values) + 1), loss_values, label=f"Epoch {epoch}")
+
+    # Add labels and legend
+    ax.set_xlabel("Batch Number")
+    ax.set_ylabel("Loss")
+    ax.set_title("Loss Over Epochs")
+    ax.legend()
+
+    plt.savefig(file_name)
+
+    # Show the plot
+    plt.show()
 
 
 # |===================|
@@ -201,7 +223,7 @@ def count_per_million_normalization(cdata):
     # Perform CPM normalization
     cpm_normalized = (cdata / total_counts) * scaling_factor
 
-    return cpm_normalized
+    return cpm_normalized.toarray()
 
 
 def median_of_ratios(cdata):
@@ -222,7 +244,7 @@ def median_of_ratios(cdata):
     # Normalize the count data by dividing by the median of ratios
     mor_normalized = cdata / median_ratios
 
-    return mor_normalized
+    return mor_normalized.toarray()
 
 
 def min_max_normalization(cdata):

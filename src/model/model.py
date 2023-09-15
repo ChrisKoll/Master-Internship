@@ -15,38 +15,35 @@ class Encoder(nn.Module):
     Class containing the encoder.
     """
 
-    def __init__(self, input_dims: int):
-        """Constructor
-
-        :param input_dims: Dimension of input vector
-        """
+    def __init__(self):
+        """Constructor"""
         super().__init__()
 
         # Model architecture
-        self.input_layer = nn.Linear(input_dims, c.SIZE_LAYER_ONE)
+        self.input_layer = nn.Linear(c.SIZE_INPUT_LAYER, c.SIZE_LAYER_ONE)
         self.hidden_layer1 = nn.Linear(c.SIZE_LAYER_ONE, c.SIZE_LAYER_TWO)
         self.hidden_layer2 = nn.Linear(c.SIZE_LAYER_TWO, c.SIZE_LAYER_THREE)
         # Latent space
         self.latent_space = nn.Linear(c.SIZE_LAYER_THREE, c.SIZE_LATENT_SPACE)
 
-        def forward(self, x):
-            """
-            Forward function for the encoder model.
+    def forward(self, x):
+        """
+        Forward function for the encoder model.
 
-            :param x: Data tensor
-            :return: Returns latent space z
-            """
-            # Reduce input tensor to 1 dimension
-            # x = torch.flatten(x, start_dim=1)
-            # ReLU activation
-            output = f.relu(self.input_layer(x))
-            output = f.relu(self.hidden_layer1(output))
-            output = f.relu(self.hidden_layer2(output))
+        :param x: Data tensor
+        :return: Returns latent space z
+        """
+        # Reduce input tensor to 1 dimension
+        # x = torch.flatten(x, start_dim=1)
+        # ReLU activation
+        output = f.relu(self.input_layer(x))
+        output = f.relu(self.hidden_layer1(output))
+        output = f.relu(self.hidden_layer2(output))
 
-            # Reconstructed input
-            z = self.latent_space1(output)
+        # Dimension reduced input
+        z = self.latent_space(output)
 
-            return z
+        return z
 
 
 class VariationalEncoder(nn.Module):
@@ -54,15 +51,12 @@ class VariationalEncoder(nn.Module):
     Class containing the variational encoder.
     """
 
-    def __init__(self, input_dims: int):
-        """Constructor
-
-        :param input_dims: Dimension of input vector
-        """
+    def __init__(self):
+        """Constructor"""
         super().__init__()
 
         # Model architecture
-        self.input_layer = nn.Linear(input_dims, c.SIZE_LAYER_ONE)
+        self.input_layer = nn.Linear(c.SIZE_INPUT_LAYER, c.SIZE_LAYER_ONE)
         self.hidden_layer1 = nn.Linear(c.SIZE_LAYER_ONE, c.SIZE_LAYER_TWO)
         self.hidden_layer2 = nn.Linear(c.SIZE_LAYER_TWO, c.SIZE_LAYER_THREE)
         # Latent space for mean and standard deviation
@@ -99,26 +93,21 @@ class Decoder(nn.Module):
     Class containing the decoder.
     """
 
-    def __init__(self, output_dims):
-        """Constructor
-
-        :param output_dims: Dimension of output vector
-        """
+    def __init__(self):
+        """Constructor"""
         super().__init__()
 
         # Model architecture
         self.input_layer = nn.Linear(c.SIZE_LATENT_SPACE, c.SIZE_LAYER_THREE)
         self.hidden_layer1 = nn.Linear(c.SIZE_LAYER_THREE, c.SIZE_LAYER_TWO)
         self.hidden_layer2 = nn.Linear(c.SIZE_LAYER_TWO, c.SIZE_LAYER_ONE)
-        self.output_layer = nn.Linear(c.SIZE_LAYER_ONE, output_dims)
+        self.output_layer = nn.Linear(c.SIZE_LAYER_ONE, c.SIZE_INPUT_LAYER)
 
-    def forward(self, z, *, number_samples, number_genes):
+    def forward(self, z):
         """
         Forward function for the decoder model.
 
         :param z: Latent space representation
-        :param number_samples: Number of samples for output reshape
-        :param number_genes: Number of genes for output reshape
         :return: Original representation of the data
         """
         # ReLU activation
@@ -127,7 +116,7 @@ class Decoder(nn.Module):
         output = f.relu(self.hidden_layer2(output))
         output = self.output_layer(output)
 
-        return output.reshape((number_samples, number_genes))
+        return output
 
 
 class Autoencoder(nn.Module):
@@ -135,16 +124,15 @@ class Autoencoder(nn.Module):
     Class containing the whole autoencoder.
     """
 
-    def __init__(self, size_input_vector: int):
+    def __init__(self):
         """Constructor
 
         :param size_input_vector: Size of the input vector
         """
         super().__init__()
 
-        self.input_size = size_input_vector
-        self.encoder = Encoder(size_input_vector)
-        self.decoder = Decoder(size_input_vector)
+        self.encoder = Encoder()
+        self.decoder = Decoder()
 
     def forward(self, x):
         """
@@ -162,16 +150,15 @@ class VariationalAutoencoder(nn.Module):
     Class containing the whole variational autoencoder.
     """
 
-    def __init__(self, size_input_vector: int):
+    def __init__(self):
         """Constructor
 
         :param size_input_vector: Size of the input vector
         """
         super().__init__()
 
-        self.input_size = size_input_vector
-        self.encoder = VariationalEncoder(size_input_vector)
-        self.decoder = Decoder(size_input_vector)
+        self.encoder = VariationalEncoder()
+        self.decoder = Decoder()
 
     def forward(self, x):
         """

@@ -4,11 +4,15 @@ from scipy import sparse
 
 # == Standard ==
 from os import path
+from pathlib import Path
 
 # == Third-party ==
 from anndata import AnnData, read_h5ad
 
 # == Local imports ==
+import constants as const
+import model.model as mod
+import model.training as train
 import util
 
 
@@ -55,7 +59,7 @@ class Handler:
         # --> Expression distribution for all 0 genes
         util.plot_0_expression(adata=self.adata)
 
-    def normalize(self):
+    def cpm_normalize(self):
         """
         Normalizes the data after a given format.
         """
@@ -63,7 +67,48 @@ class Handler:
         self.adata.layers["cpm_normalized"] = util.count_per_million_normalization(
             self.adata.X
         )
+
+        file_name = self.file_location.split("/")[-1]
+        self.adata.write_h5ad(Path(file_name), compression="gzip")
+
+    def min_max_normalize(self):
+        """
+        Docstring
+        """
         # Use Min-Max normalization to bring data in range of 0 - 1
-        self.adata.layers["cpm_minmax_normalized"] = util.min_max_normalization(
+        self.adata.layers["minmax_normalized"] = util.min_max_normalization(
             self.adata.layers["cpm_normalized"]
         )
+
+        file_name = self.file_location.split("/")[-1]
+        self.adata.write_h5ad(Path(file_name), compression="gzip")
+
+    def train_ae(self):
+        """
+        Docstring
+        """
+        autoencoder = mod.Autoencoder()
+        trainer = train.Trainer(self.adata, autoencoder)
+        total_training_loss, total_validation_loss = trainer.fit_ae(
+            epochs=const.NUM_EPOCHS,
+            batch_size=const.BATCH_SIZE,
+            learning_rate=const.LEARNING_RATE,
+            weight_decay=const.WEIGTH_DECAY,
+        )
+        util.plot_loss(total_training_loss, "total_training_loss.png")
+        util.plot_loss(total_validation_loss, "total_validation_loss.png")
+
+    def train_vae(self):
+        """
+        Docstring
+        """
+        autoencoder = mod.VariationalAutoencoder()
+        trainer = train.Trainer(self.adata, autoencoder)
+        total_training_loss, total_validation_loss = trainer.fit_vae(
+            epochs=const.NUM_EPOCHS,
+            batch_size=const.BATCH_SIZE,
+            learning_rate=const.LEARNING_RATE,
+            weight_decay=const.WEIGTH_DECAY,
+        )
+        util.plot_loss(total_training_loss, "total_training_loss.png")
+        util.plot_loss(total_validation_loss, "total_validation_loss.png")
