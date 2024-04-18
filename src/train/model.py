@@ -1,3 +1,9 @@
+"""
+TRAIN module - MODEL:
+Contains functionality to generate an autoencoder neural network.
+The code can be used to create variable size networks for normal and variational autocoders.
+"""
+
 # Standard library imports
 from typing import Optional
 
@@ -6,25 +12,29 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as f
 
-# Local imports
-import constants as c
-
 
 class Encoder(nn.Module):
     """
     Class containing the encoder.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        size_input_layer: int,
+        size_layer_one: int,
+        size_layer_two: int,
+        size_layer_three: int,
+        size_latent_space: int,
+    ):
         """Constructor"""
         super().__init__()
 
         # Model architecture
-        self.input_layer = nn.Linear(c.SIZE_INPUT_LAYER, c.SIZE_LAYER_ONE)
-        self.hidden_layer1 = nn.Linear(c.SIZE_LAYER_ONE, c.SIZE_LAYER_TWO)
-        self.hidden_layer2 = nn.Linear(c.SIZE_LAYER_TWO, c.SIZE_LAYER_THREE)
+        self.input_layer = nn.Linear(size_input_layer, size_layer_one)
+        self.hidden_layer1 = nn.Linear(size_layer_one, size_layer_two)
+        self.hidden_layer2 = nn.Linear(size_layer_two, size_layer_three)
         # Latent space
-        self.latent_space = nn.Linear(c.SIZE_LAYER_THREE, c.SIZE_LATENT_SPACE)
+        self.latent_space = nn.Linear(size_layer_three, size_latent_space)
 
     def forward(self, x):
         """
@@ -51,17 +61,24 @@ class VariationalEncoder(nn.Module):
     Class containing the variational encoder.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        size_input_layer: int,
+        size_layer_one: int,
+        size_layer_two: int,
+        size_layer_three: int,
+        size_latent_space: int,
+    ):
         """Constructor"""
         super().__init__()
 
         # Model architecture
-        self.input_layer = nn.Linear(c.SIZE_INPUT_LAYER, c.SIZE_LAYER_ONE)
-        self.hidden_layer1 = nn.Linear(c.SIZE_LAYER_ONE, c.SIZE_LAYER_TWO)
-        self.hidden_layer2 = nn.Linear(c.SIZE_LAYER_TWO, c.SIZE_LAYER_THREE)
+        self.input_layer = nn.Linear(size_input_layer, size_layer_one)
+        self.hidden_layer1 = nn.Linear(size_layer_one, size_layer_two)
+        self.hidden_layer2 = nn.Linear(size_layer_two, size_layer_three)
         # Latent space for mean and standard deviation
-        self.latent_space1 = nn.Linear(c.SIZE_LAYER_THREE, c.SIZE_LATENT_SPACE)
-        self.latent_space2 = nn.Linear(c.SIZE_LAYER_THREE, c.SIZE_LATENT_SPACE)
+        self.latent_space1 = nn.Linear(size_layer_three, size_latent_space)
+        self.latent_space2 = nn.Linear(size_layer_three, size_latent_space)
 
     def forward(self, x):
         """
@@ -93,15 +110,22 @@ class Decoder(nn.Module):
     Class containing the decoder.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        size_input_layer: int,
+        size_layer_one: int,
+        size_layer_two: int,
+        size_layer_three: int,
+        size_latent_space: int,
+    ):
         """Constructor"""
         super().__init__()
 
         # Model architecture
-        self.input_layer = nn.Linear(c.SIZE_LATENT_SPACE, c.SIZE_LAYER_THREE)
-        self.hidden_layer1 = nn.Linear(c.SIZE_LAYER_THREE, c.SIZE_LAYER_TWO)
-        self.hidden_layer2 = nn.Linear(c.SIZE_LAYER_TWO, c.SIZE_LAYER_ONE)
-        self.output_layer = nn.Linear(c.SIZE_LAYER_ONE, c.SIZE_INPUT_LAYER)
+        self.input_layer = nn.Linear(size_latent_space, size_layer_three)
+        self.hidden_layer1 = nn.Linear(size_layer_three, size_layer_two)
+        self.hidden_layer2 = nn.Linear(size_layer_two, size_layer_one)
+        self.output_layer = nn.Linear(size_layer_one, size_input_layer)
 
     def forward(self, z):
         """
@@ -124,15 +148,31 @@ class Autoencoder(nn.Module):
     Class containing the whole autoencoder.
     """
 
-    def __init__(self):
-        """Constructor
-
-        :param size_input_vector: Size of the input vector
-        """
+    def __init__(
+        self,
+        size_input_layer: int,
+        size_layer_one: int,
+        size_layer_two: int,
+        size_layer_three: int,
+        size_latent_space: int,
+    ):
+        """Constructor"""
         super().__init__()
 
-        self.encoder = Encoder()
-        self.decoder = Decoder()
+        self.encoder = Encoder(
+            size_input_layer,
+            size_layer_one,
+            size_layer_two,
+            size_layer_three,
+            size_latent_space,
+        )
+        self.decoder = Decoder(
+            size_input_layer,
+            size_layer_one,
+            size_layer_two,
+            size_layer_three,
+            size_latent_space,
+        )
 
     def forward(self, x):
         """
@@ -150,15 +190,31 @@ class VariationalAutoencoder(nn.Module):
     Class containing the whole variational autoencoder.
     """
 
-    def __init__(self):
-        """Constructor
-
-        :param size_input_vector: Size of the input vector
-        """
+    def __init__(
+        self,
+        size_input_layer: int,
+        size_layer_one: int,
+        size_layer_two: int,
+        size_layer_three: int,
+        size_latent_space: int,
+    ):
+        """Constructor"""
         super().__init__()
 
-        self.encoder = VariationalEncoder()
-        self.decoder = Decoder()
+        self.encoder = VariationalEncoder(
+            size_input_layer,
+            size_layer_one,
+            size_layer_two,
+            size_layer_three,
+            size_latent_space,
+        )
+        self.decoder = Decoder(
+            size_input_layer,
+            size_layer_one,
+            size_layer_two,
+            size_layer_three,
+            size_latent_space,
+        )
 
     def forward(self, x):
         """

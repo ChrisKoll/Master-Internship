@@ -24,3 +24,4 @@ env.bak/
 *.log
 *.swp
 .DS_Store
+.Rproj.user

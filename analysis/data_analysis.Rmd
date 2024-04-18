@@ -1,0 +1,172 @@
+---
+title: "Data Analysis"
+date: "`r format(Sys.Date(), '%d %B, %Y')`"
+author: "Christian Kolland"
+output: html_document
+---
+
+```{r load_packages, echo=FALSE, include=FALSE}
+require(anndata)
+require(magrittr)
+require(heatmaply)
+require(Matrix) # Sparse matrices
+require(proxyC) # Sparse matrix methods
+require(tidyverse)
+```
+
+```{r load_data, echo=FALSE}
+# file_path <- "~/Projects/Master-Internship/data/adata_1000x1000_sample.h5ad"
+file_path <- "/media/sf_Share/sample_data.h5ad"
+# To provide file name
+file_name <- basename(file_path)
+
+# Read h5ad file
+# Rows --> Samples
+# Columns --> Genes
+adata <- anndata::read_h5ad(file_path)
+count_data <- adata$X
+```
+
+## Data Overview
+
+*Dataset*: `r file_name`
+
+```{r general_information, echo=FALSE, include=FALSE}
+# Number of samples
+num_samples <- length(adata$obs_names)
+
+# Number of genes
+num_genes <- length(adata$var_names)
+
+# Genes with 0 expression over all samples
+zero_exprs <- which(Matrix::colSums(count_data) == 0)
+num_zero_exprs <- length(zero_exprs)
+# Calculate percentage of 0 expression genes
+perc_zero_exprs <- (num_zero_exprs / num_genes) * 100
+```
+
+Number of **samples** in data: `r num_samples`
+
+Number of **genes** in data: `r num_genes`
+
+Number of **genes** with **0 expression** over all samples: `r num_zero_exprs`  
+`r perc_zero_exprs`% of the genes have **0 expression** over all samples
+
+
+## Gene Counts
+
+```{r gene_counts, echo=FALSE}
+# Counts per gene
+counts_per_gene <- Matrix::colSums(count_data)
+# To data frame for plotting
+counts_per_gene <- data.frame(
+  gene = names(counts_per_gene),
+  count = counts_per_gene,
+  row.names = NULL
+)
+
+# Plot histogram
+ggplot2::ggplot(counts_per_gene, ggplot2::aes(
+  x = reorder(gene, -count), # Order counts desc
+  y = count,
+  fill = count
+)) +
+  ggplot2::geom_bar(stat = "identity") +
+  ggplot2::labs(x = "Genes", y = "Expression Over All Samples") +
+  ggplot2::theme(
+    axis.ticks.x = ggplot2::element_blank(),
+    axis.text.x = ggplot2::element_blank(),
+    legend.position = "none"
+  )
+```
+
+
+## Cell Counts
+
+```{r cell_counts, echo=FALSE, eval=FALSE}
+# Amount of samples per unique cell type
+samples_per_type <- table(adata$obs$cell_type)
+# To data frame for plotting
+samples_per_type <- data.frame(
+  type = names(samples_per_type),
+  count = as.vector(samples_per_type),
+  row.names = NULL
+)
+
+# Plot histogram
+ggplot2::ggplot(samples_per_type, ggplot2::aes(
+  x = reorder(type, -count), # Order counts desc
+  y = count,
+  fill = type # Color the bars
+)) +
+  ggplot2::geom_bar(stat = "identity") +
+  ggplot2::labs(x = "Cell Types", y = "Amount") +
+  ggplot2::theme(
+    axis.text.x = ggplot2::element_text(angle = 60, hjust = 1),
+    legend.position = "none"
+  )
+```
+
+
+## PCA
+
+Remove genes with all 0 values for all samples before performing PCA.
+This is because no variance can be calculated for these genes.
+
+```{r remove_all_0_genes, echo=FALSE}
+# Identify all columns that have all 0 values
+all_zero <- which(Matrix::colSums(count_data) == 0)
+# Remove columns from data
+reduced_count_data <- count_data[, -all_zero]
+
+# Number of removed genes
+removed_genes <- ncol(count_data) - ncol(reduced_count_data)
+# Genes left after reduction
+remaining_genes <- ncol(reduced_count_data)
+```
+
+**`r removed_genes`** genes have been removed.  
+PCA will be done with **`r remaining_genes`** genes.
+
+```{r principal_components, echo=FALSE}
+# Calculate principal components
+principal_components <- prcomp(reduced_count_data, scale. = TRUE)
+# Save PC1 and PC2
+pca <- as.data.frame(principal_components$x[, 1:2])
+
+# Add cell type information
+# pca$Type <- adata$obs$cell_type
+
+# Plot data
+ggplot2::ggplot(pca, ggplot2::aes(
+  x = PC1,
+  y = PC2
+  # color = Type
+)) +
+  ggplot2::geom_point()
+```
+
+
+## Gene-to-gene Correlation
+
+Uses the reduced count data. Genes with all 0 expression have no influence on
+the correlation to other genes.
+
+```{r gene_to_gene_correlation, echo=FALSE}
+# Transpose matrix to calculate the correct correlations
+t_count_data <- Matrix::t(reduced_count_data)
+
+# Calculate correlations
+corr_matrix <- proxyC::simil(
+  t_count_data,
+  method = "correlation", use_nan = TRUE
+)
+# Convert to regular matrix
+corr_matrix <- as.matrix(corr_matrix)
+
+# Plot data
+heatmaply::heatmaply_cor(corr_matrix,
+  show_dendrogram = c(FALSE, FALSE),
+  showticklabels = c(FALSE, FALSE)
+)
+```

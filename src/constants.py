@@ -1,47 +1,62 @@
 """
-Contains all constant values.
+Contains the constant values for the HANDLER module.
 """
 
+### HANDLER
 
-# |=============|
-# |-- model.py --|
-# |=============|
+# Arg ANNDATA
+ARG_ANNDATA = "anndata"
 
-# === Model ===
-# Layer size
-# 33538 (input size) * 1/3
-# SIZE_INPUT_LAYER = 33538
-# SIZE_LAYER_ONE = 10062
-# SIZE_LAYER_TWO = 3018
-# SIZE_LAYER_THREE = 906
-# SIZE_LATENT_SPACE = 200
+# Arg COMMAND
+ARG_COMMAND = "command"
+ARG_COMMAND_EXPECTED1 = "subset"
+ARG_COMMAND_EXPECTED2 = "normalize"
+ARG_COMMAND_EXPECTED3 = "train"
 
-SIZE_INPUT_LAYER = 10000
-SIZE_LAYER_ONE = 3333
-SIZE_LAYER_TWO = 1111
-SIZE_LAYER_THREE = 370
-SIZE_LATENT_SPACE = 50
+## SUBSET command
 
-# == Hyperparameters ==
-NUM_EPOCHS = 10
-BATCH_SIZE = 128
-LEARNING_RATE = 1e-2
-WEIGTH_DECAY = 1e-5
+# Arg ROWS
+ARG_ROWS = "rows"
 
+# Arg COLUMNS
+ARG_COLUMNS = "cols"
 
-# |=============|
-# |-- util.py --|
-# |=============|
+# Arg NO-SHUFFLE
+ARG_NO_SHUFFLE = "no-shuffle"
 
-# == Statistical analysis ==
-ARGUMENT_COLLECTION_PERCENTAGES = {"samples", "genes"}
-LABEL1_0_EXP = "0 Expression Genes"
-LABEL2_0_EXP = "Other Genes"
-OBS_CELL_TYPE = "cell_type"
-OBS_DONOR = "donor"
-PLOT_TITLE_0_EXP = "Expression Overview"
-PLOT_TITLE_CELL_TYPE_DIST = "Sample Distribution per Cell Type"
-PLOT_TITLE_DONOR_DIST = "Sample Distribution per Donor"
+## NORMALIZE
 
-# == Normalization ==
-CPM_SCALING_FACT = 1e6
+# Arg METHOD
+ARG_METHOD = "method"
+
+## TRAIN command
+
+# Arg MODEL
+ARG_MODEL = "model"
+
+M_CONFIG_SECTION1 = "ModelType"
+M_CONFIG_S1_KEY1 = "Type"
+M_CONFIG_S1_K1_EXPECTED1 = "standard"
+M_CONFIG_S1_K1_EXPECTED2 = "variational"
+M_CONFIG_SECTION2 = "ModelStructure"
+M_CONFIG_S2_KEY1 = "sizeinputlayer"
+M_CONFIG_S2_KEY2 = "sizelayer1"
+M_CONFIG_S2_KEY3 = "sizelayer2"
+M_CONFIG_S2_KEY4 = "sizelayer3"
+M_CONFIG_S2_KEY5 = "sizelatentspace"
+
+# Arg HYPERPARAMS
+ARG_HYPERPARAMS = "hyperparams"
+H_CONFIG_SECTION = "Hyperparameters"
+
+# Arg Subset
+ARG_SUBSET = "subset"
+
+# Arg NORMALIZATION
+ARG_NORMALIZATION = "normalization"
+
+## ERRORS
+VALUE_ERR_IFP = "INVALID FILE PATH"
+VALUE_ERR_IK = "INVALID KEY"
+VALUE_ERR_MA = "MISSING ARGUMENT"
+VALUE_ERR_UC = "UNKNOWN COMMENT"
