@@ -32,7 +32,7 @@ def dense_cpm(count_matrix: np.array) -> np.array:
     return cpm_matrix
 
 
-def sparse_cpm(sp_matrix: csr_matrix) -> np.array:
+def sparse_cpm(sp_matrix: csr_matrix) -> csr_matrix:
     """
     Calculates the Counts Per Million (CPM) normalization for a count matrix in the sparse format.
     Count matrix format: rows = samples/cells, cols = genes
@@ -52,3 +52,67 @@ def sparse_cpm(sp_matrix: csr_matrix) -> np.array:
     cpm_matrix = cell_counts.dot(multplied_counts)
 
     return cpm_matrix
+
+
+def dense_log(count_matrix: np.array) -> np.array:
+    """
+    Calculates natural log transformation for a count matrix.
+    Adds 1 to each value to produce a numeric result for 0 counts.
+    Count matrix format: rows = samples/cells, cols = genes
+
+    Args:
+        count_matrix (numpy.array): Count matrix.
+
+    Returns:
+        np.array: Transformed counts.
+    """
+    # Calculate log values
+    # --> +1 to each value
+    log_matrix = np.log(count_matrix + 1)
+
+    return log_matrix
+
+
+def dense_min_max(
+    count_matrix: np.array, min_val: int = 0, max_val: int = 1
+) -> np.array:
+    """
+    Rescales the values from a count matrix to the given range.
+    Default boundaries are [0, 1].
+    Count matrix format: rows = samples/cells, cols = genes
+
+    Args:
+        count_matrix (numpy.array): Count matrix.
+        min_val (int): Minimal value after rescaling.
+        max_val (int): Maximum value after rescaling.
+
+    Returns:
+        np.array: Rescaled counts.
+    """
+    # Determines min value in data
+    min_data = np.min(count_matrix)
+    # Determines max value in data
+    max_data = np.max(count_matrix)
+
+    # Rescales values to given range
+    min_max_normalized = (count_matrix - min_data) / (max_data - min_data) * (
+        max_val - min_val
+    ) + min_val
+
+    return min_max_normalized
+
+
+def sparse_min_max(
+    sp_matrix: csr_matrix, min_val: int = 0, max_val: int = 1
+) -> csr_matrix:
+    # Get min value from sparse matrix
+    min_data = sp_matrix.min()
+    # Get max value from sparse matrix
+    max_data = sp_matrix.max()
+
+    # Calculate Min-Max as described above
+    min_max_matrix = (sp_matrix - min_data) / (max_data - min_data) * (
+        max_val - min_val
+    ) + min_val
+
+    return min_max_matrix
