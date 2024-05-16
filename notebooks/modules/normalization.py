@@ -77,7 +77,7 @@ def dense_min_max(
     count_matrix: np.array, min_val: int = 0, max_val: int = 1
 ) -> np.array:
     """
-    Rescales the values from a count matrix to the given range.
+    Rescales the values for each feature in a count matrix to the given range.
     Default boundaries are [0, 1].
     Count matrix format: rows = samples/cells, cols = genes
 
@@ -89,10 +89,10 @@ def dense_min_max(
     Returns:
         np.array: Rescaled counts.
     """
-    # Determines min value in data
-    min_data = np.min(count_matrix)
-    # Determines max value in data
-    max_data = np.max(count_matrix)
+    # Determines min value for each matrix column
+    min_data = np.min(count_matrix, axis=0)
+    # Determines max value for each matrix column
+    max_data = np.max(count_matrix, axis=0)
 
     # Rescales values to given range
     min_max_normalized = (count_matrix - min_data) / (max_data - min_data) * (
@@ -105,14 +105,36 @@ def dense_min_max(
 def sparse_min_max(
     sp_matrix: csr_matrix, min_val: int = 0, max_val: int = 1
 ) -> csr_matrix:
-    # Get min value from sparse matrix
-    min_data = sp_matrix.min()
-    # Get max value from sparse matrix
-    max_data = sp_matrix.max()
+    """
+    Rescales the values for each feature in a sparse count matrix to the given range.
+    Default boundaries are [0, 1].
+    Count matrix format: rows = samples/cells, cols = genes
 
-    # Calculate Min-Max as described above
-    min_max_matrix = (sp_matrix - min_data) / (max_data - min_data) * (
-        max_val - min_val
-    ) + min_val
+    Args:
+        count_matrix (numpy.array): Count matrix (Compressed Sparse Row format).
+        min_val (int): Minimal value after rescaling.
+        max_val (int): Maximum value after rescaling.
 
-    return min_max_matrix
+    Returns:
+        csr_matirx: Rescaled counts.
+    """
+    # Change matrix type so value are save correctly
+    if sp_matrix.dtype != float:
+        sp_matrix = sp_matrix.astype(float)
+
+    # Convert to Compressed Sparse Column (CSC) format
+    # --> Improves computation
+    sp_matrix = sp_matrix.tocsc()
+
+    # Iterate over all features
+    for idx in range(sp_matrix.shape[1]):
+        feature_data = sp_matrix[:, idx]
+        # Calculate normalized values for feature
+        sp_matrix[:, idx] = (feature_data - feature_data.min()) / (
+            feature_data.max() - feature_data.min()
+        ) * (max_val - min_val) + min_val
+
+    # Convert back to CSR format
+    min_max_normalized = sp_matrix.tocsr()
+
+    return min_max_normalized
