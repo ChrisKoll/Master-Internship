@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Christian Kolland">
-<meta name="dcterms.date" content="2024-06-22">
+<meta name="dcterms.date" content="2024-06-23">
 
 <title>Exploratory Data Analysis</title>
 <style>
@@ -59,16 +59,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="exploratory_data_analysis_files/libs/clipboard/clipboard.min.js"></script>
-<script src="exploratory_data_analysis_files/libs/quarto-html/quarto.js"></script>
-<script src="exploratory_data_analysis_files/libs/quarto-html/popper.min.js"></script>
-<script src="exploratory_data_analysis_files/libs/quarto-html/tippy.umd.min.js"></script>
-<script src="exploratory_data_analysis_files/libs/quarto-html/anchor.min.js"></script>
-<link href="exploratory_data_analysis_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="exploratory_data_analysis_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="exploratory_data_analysis_files/libs/bootstrap/bootstrap.min.js"></script>
-<link href="exploratory_data_analysis_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="exploratory_data_analysis_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script src="eda_files/libs/clipboard/clipboard.min.js"></script>
+<script src="eda_files/libs/quarto-html/quarto.js"></script>
+<script src="eda_files/libs/quarto-html/popper.min.js"></script>
+<script src="eda_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="eda_files/libs/quarto-html/anchor.min.js"></script>
+<link href="eda_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="eda_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="eda_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="eda_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="eda_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 
 
 </head>
@@ -86,9 +86,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#exploratory-analysis" id="toc-exploratory-analysis" class="nav-link" data-scroll-target="#exploratory-analysis">Exploratory Analysis</a>
   <ul class="collapse">
   <li><a href="#overview" id="toc-overview" class="nav-link" data-scroll-target="#overview">Overview</a></li>
+  <li><a href="#donor-distribution" id="toc-donor-distribution" class="nav-link" data-scroll-target="#donor-distribution">Donor Distribution</a></li>
   <li><a href="#gene-counts" id="toc-gene-counts" class="nav-link" data-scroll-target="#gene-counts">Gene Counts</a></li>
   <li><a href="#cell-distribution" id="toc-cell-distribution" class="nav-link" data-scroll-target="#cell-distribution">Cell Distribution</a></li>
-  <li><a href="#donor-distribution" id="toc-donor-distribution" class="nav-link" data-scroll-target="#donor-distribution">Donor Distribution</a></li>
   <li><a href="#pca" id="toc-pca" class="nav-link" data-scroll-target="#pca">PCA</a></li>
   </ul></li>
   </ul>
@@ -115,7 +115,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">June 22, 2024</p>
+      <p class="date">June 23, 2024</p>
     </div>
   </div>
   
@@ -143,32 +143,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="overview" class="level3">
 <h3 class="anchored" data-anchor-id="overview">Overview</h3>
 <p><em>Dataset</em>: adata_1000x1000_sample.h5ad</p>
-<p>Number of <strong>samples</strong> in data: 1000</p>
-<p>Number of <strong>genes</strong> in data: 1000</p>
-<p>Number of <strong>genes</strong> with <strong>0 expression</strong> over all samples: 266<br>
-26.6% of the genes have <strong>0 expression</strong> over all samples</p>
+<p>Number of <strong>samples</strong> in data: 1000<br>
+Number of <strong>genes</strong> in data: 1000</p>
 </section>
-<section id="gene-counts" class="level3">
-<h3 class="anchored" data-anchor-id="gene-counts">Gene Counts</h3>
+<section id="donor-distribution" class="level3">
+<h3 class="anchored" data-anchor-id="donor-distribution">Donor Distribution</h3>
 <div class="cell">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="exploratory_data_analysis_files/figure-html/plot-gene-counts-1.png" class="img-fluid figure-img" width="672"></p>
-<figcaption>Gene expression over all samples</figcaption>
-</figure>
-</div>
-</div>
-</div>
-</section>
-<section id="cell-distribution" class="level3">
-<h3 class="anchored" data-anchor-id="cell-distribution">Cell Distribution</h3>
-<div class="cell">
-<div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="exploratory_data_analysis_files/figure-html/plot-cell-counts-1.png" class="img-fluid figure-img" width="672"></p>
-<figcaption>Cell type distribution</figcaption>
+<p><img src="eda_files/figure-html/plot-donor-distribution-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption>Donor distribution over all samples</figcaption>
 </figure>
 </div>
 </div>
@@ -179,14 +164,29 @@ fill : &lt;GuideLegend&gt;</code></pre>
 </div>
 </div>
 </section>
-<section id="donor-distribution" class="level3">
-<h3 class="anchored" data-anchor-id="donor-distribution">Donor Distribution</h3>
+<section id="gene-counts" class="level3">
+<h3 class="anchored" data-anchor-id="gene-counts">Gene Counts</h3>
 <div class="cell">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="exploratory_data_analysis_files/figure-html/plot-donor-distribution-1.png" class="img-fluid figure-img" width="672"></p>
-<figcaption>Donor distribution over all samples</figcaption>
+<p><img src="eda_files/figure-html/plot-gene-counts-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption>Gene expression over all samples</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Number of <strong>genes</strong> with <strong>0 expression</strong> over all samples: 266<br>
+26.6% of the genes have <strong>0 expression</strong> over all samples</p>
+</section>
+<section id="cell-distribution" class="level3">
+<h3 class="anchored" data-anchor-id="cell-distribution">Cell Distribution</h3>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="eda_files/figure-html/plot-cell-counts-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption>Cell type distribution</figcaption>
 </figure>
 </div>
 </div>
@@ -206,7 +206,7 @@ PCA will be done with <strong>734</strong> genes.</p>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="exploratory_data_analysis_files/figure-html/principal-components-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="eda_files/figure-html/principal-components-1.png" class="img-fluid figure-img" width="672"></p>
 <figcaption>PCA</figcaption>
 </figure>
 </div>
