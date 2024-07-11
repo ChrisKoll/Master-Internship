@@ -1,0 +1,237 @@
+---
+title: "Exploratory Data Analysis"
+date: today
+author: "Christian Kolland"
+format:
+  html: 
+    toc: true
+execute: 
+  echo: false
+---
+
+```{r}
+#| label: load-packages
+#| output: false
+
+library(anndata)
+library(RColorBrewer)
+library(reticulate)
+library(tidyverse)
+```
+
+
+## Data Source
+
+The data is from the Heart Cell Atlas
+
+## Load Data
+
+```{r}
+#| label: provide-data-location
+#| echo: true
+
+# path_to_data <- "../../data/global_raw.h5ad" # Too big
+path_to_data <- "../../data/adata_1000x1000_sample.h5ad"
+```
+
+```{r}
+#| label: load-data
+#| output: false
+
+reticulate::use_condaenv(condaenv = "machine_learning", 
+                         conda = "/home/ubuntu/software/miniconda3/bin/conda")
+
+# Read h5ad file
+# Rows --> Samples
+# Columns --> Genes
+adata <- anndata::read_h5ad(path_to_data)
+```
+
+## Exploratory Analysis
+
+### Overview
+
+*Dataset*: `r basename(path_to_data)`
+
+```{r}
+#| label: data-overview
+
+# Number of samples
+num_samples <- length(adata$obs_names)
+
+# Number of genes
+num_genes <- length(adata$var_names)
+```
+
+Number of **samples** in data: `r num_samples`  
+Number of **genes** in data: `r num_genes`
+
+### Donor Distribution
+
+```{r}
+#| label: plot-donor-distribution
+#| fig-cap: Donor distribution over all samples
+
+# Generate donor info
+donor_info <- adata$obs_names |> 
+  dplyr::as_tibble() |> 
+  dplyr::rename(sample = value) |> 
+  dplyr::mutate(donor = adata$obs$donor) |> 
+  dplyr::select(-sample) |> 
+  dplyr::count(donor) |> 
+  dplyr::mutate(percentage = round((n / sum(n) * 100), digits = 2))
+
+# Increase size of palette adjusted to amount of values
+increased_palette <- colorRampPalette(
+  RColorBrewer::brewer.pal(12, "Paired")
+  )(nrow(donor_info))
+
+# Hole size --> Bigger values for bigger hole
+hsize <- 4
+# Donut plot
+donor_info |> 
+  dplyr::mutate(hsize = hsize) |> 
+  ggplot2::ggplot(ggplot2::aes(x = hsize, y = n, fill = donor)) +
+  # Donut plot
+  ggplot2::geom_col(color = "black") + 
+  ggplot2::coord_polar(theta = "y") +
+  ggplot2::xlim(c(0.2, hsize + 0.5)) +
+  # Add labels on "cols"
+  ggplot2::geom_label(aes(label = percentage),
+             position = position_stack(vjust = 0.5),
+             show.legend = FALSE) +
+  # Change theme
+  ggplot2::scale_fill_manual(values = increased_palette) +
+  ggplot2::xlab("") + ggplot2::ylab("") +
+  ggplot2::guides(fill = ggplot2::guide_legend(title = "Donors"))
+```
+
+### Gene Counts
+
+```{r}
+#| label: subset-data
+
+bdata <- adata[1:ceiling(0.2 * adata$n_vars), 1:ceiling(0.2 * adata$n_obs)]
+count_data <- adata$X
+```
+
+
+```{r}
+#| label: plot-gene-counts
+#| fig-cap: Gene expression over all samples
+
+# Counts per gene
+counts_per_gene <- Matrix::colSums(count_data)
+# To data frame for plotting
+counts_per_gene <- data.frame(
+  gene = names(counts_per_gene),
+  count = counts_per_gene,
+  row.names = NULL
+)
+
+# Genes with 0 expression over all samples
+zero_exprs <- which(Matrix::colSums(count_data) == 0)
+num_zero_exprs <- length(zero_exprs)
+# Calculate percentage of 0 expression genes
+perc_zero_exprs <- (num_zero_exprs / num_genes) * 100
+
+# Plot histogram
+ggplot2::ggplot(counts_per_gene, ggplot2::aes(
+  x = reorder(gene, -count), # Order counts desc
+  y = count,
+  fill = count
+)) +
+  ggplot2::geom_bar(stat = "identity") +
+  ggplot2::labs(x = "Genes", y = "Expression Over All Samples") +
+  ggplot2::theme(
+    axis.ticks.x = ggplot2::element_blank(),
+    axis.text.x = ggplot2::element_blank(),
+    legend.position = "none"
+  )
+```
+
+Number of **genes** with **0 expression** over all samples: `r num_zero_exprs`  
+`r perc_zero_exprs`% of the genes have **0 expression** over all samples
+
+### Cell Distribution
+
+```{r}
+#| label: plot-cell-counts
+#| fig-cap: Cell type distribution
+
+# Amount of samples per unique cell type
+samples_per_type <- table(bdata$obs$cell_type)
+# To data frame for plotting
+samples_per_type <- data.frame(
+  type = names(samples_per_type),
+  count = as.vector(samples_per_type),
+  row.names = NULL
+)
+
+# Increase size of palette adjusted to amount of values
+increased_palette <- colorRampPalette(
+  RColorBrewer::brewer.pal(12, "Paired")
+  )(nrow(samples_per_type))
+
+# Hole size --> Bigger values for bigger hole
+hsize <- 4
+# Donut plot
+samples_per_type |> 
+  dplyr::mutate(hsize = hsize) |> 
+  ggplot2::ggplot(ggplot2::aes(x = hsize, y = count, fill = type)) +
+  # Donut plot
+  ggplot2::geom_col(color = "black") + 
+  ggplot2::coord_polar(theta = "y") +
+  ggplot2::xlim(c(0.2, hsize + 0.5)) +
+  # Add labels on "cols"
+  ggplot2::geom_label(aes(label = count),
+             position = position_stack(vjust = 0.5),
+             show.legend = FALSE) +
+  # Change theme
+  ggplot2::scale_fill_manual(values = increased_palette) +
+  ggplot2::xlab("") + ggplot2::ylab("")
+  ggplot2::guides(fill = ggplot2::guide_legend(title = "Cell Types"))
+```
+
+### PCA
+
+Remove genes with all 0 values for all samples before performing PCA.
+This is because no variance can be calculated for these genes.
+
+```{r}
+#| label: remove-all-0-genes
+
+# Identify all columns that have all 0 values
+all_zero <- which(Matrix::colSums(count_data) == 0)
+# Remove columns from data
+reduced_count_data <- count_data[, -all_zero]
+
+# Number of removed genes
+removed_genes <- ncol(count_data) - ncol(reduced_count_data)
+# Genes left after reduction
+remaining_genes <- ncol(reduced_count_data)
+```
+
+**`r removed_genes`** genes have been removed.  
+PCA will be done with **`r remaining_genes`** genes.
+
+```{r}
+#| label: principal-components
+#| fig-cap: PCA
+
+# Calculate principal components
+principal_components <- prcomp(reduced_count_data, scale. = TRUE)
+# Save PC1 and PC2
+pca <- as.data.frame(principal_components$x[, 1:2])
+
+# Add cell type information
+pca$Type <- bdata$obs$cell_type
+
+# Plot data
+ggplot2::ggplot(pca, ggplot2::aes(
+  x = PC1,
+  y = PC2,
+  color = Type
+)) +
+  ggplot2::geom_point()
+```
