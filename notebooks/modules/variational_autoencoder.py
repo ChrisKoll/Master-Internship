@@ -22,7 +22,6 @@ class VAEOutput:
     z_dist: torch.distributions.Distribution
     z_sample: torch.Tensor
     x_recon: torch.Tensor
-
     loss: torch.Tensor
     loss_recon: torch.Tensor
     loss_kl: torch.Tensor
@@ -42,38 +41,85 @@ class VariationalAutoencoder(nn.Module):
 
     def __init__(
         self,
-        size_input_layer: int,
-        size_layer_one: int,
-        size_layer_two: int,
-        size_layer_three: int,
-        size_latent_space: int,
+        size_layers: list[tuple[int, nn.Module]],
+        loss_function,
+        optimizer,
+        learning_rate=1e-2,
+        weight_decay=1e-3,
     ):
-        super(VariationalAutoencoder, self).__init__()  # Why?
+        super(VariationalAutoencoder, self).__init__()
 
-        self.encoder = nn.Sequential(
-            nn.Linear(size_input_layer, size_layer_one),
-            nn.SiLU(),  # Swish activation function
-            nn.Linear(size_layer_one, size_layer_two),
-            nn.SiLU(),  # Swish activation function
-            nn.Linear(size_layer_two, size_layer_three),
-            nn.SiLU(),  # Swish activation function
-            nn.Linear(
-                size_layer_three, 2 * size_latent_space
-            ),  # 2 for mean and variance
-        )
-
+        self.size_layers = size_layers
+        self.encoder = self._build_encoder()
         self.softplus = nn.Softplus()
+        self.decoder = self._build_decoder()
 
-        self.decoder = nn.Sequential(
-            nn.Linear(size_latent_space, size_layer_three),
-            nn.SiLU(),
-            nn.Linear(size_layer_three, size_layer_two),
-            nn.SiLU(),
-            nn.Linear(size_layer_two, size_layer_one),
-            nn.SiLU(),
-            nn.Linear(size_layer_one, size_input_layer),
-            nn.Sigmoid(),
+        self.criterion = loss_function
+        self.optimizer = optimizer(
+            self.parameters(), lr=learning_rate, weight_decay=weight_decay
         )
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.to(self.device)
+
+    def _build_encoder(self) -> nn.Sequential:
+        """
+        Builds the encoder architecture
+
+        Args:
+            size_layers (list(tuple)): Encoder Architecture
+        """
+        ## Encoder architecture
+        encoder_layers = []
+        # Only iterate until second to last element
+        # --> Idx of last element called
+        for idx, (size, activation) in enumerate(self.size_layers[:-1]):
+            # While second to last element no reached
+            # --> Activation function in decoder
+            if idx < len(self.size_layers[:-1]) - 1:
+                encoder_layers.append(nn.Linear(size, self.size_layers[idx + 1][0]))
+
+                # Checks if activation is viable
+                if activation is not None:
+                    assert isinstance(
+                        activation, nn.Module
+                    ), f"Activation should be of type {nn.Module}"
+                    encoder_layers.append(activation)
+            else:
+                encoder_layers.append(nn.Linear(size, 2 * self.size_layers[idx + 1][0]))
+
+        print("Constructed encoder...")
+
+        return nn.Sequential(*encoder_layers)
+
+    def _build_decoder(self) -> nn.Sequential:
+        """
+        Builds the decoder architecture
+
+        Args:
+            size_layers (list(tuple)): Decoder Architecture
+        """
+        # Reverse to build decoder (hourglass)
+        reversed_layers = list(reversed(self.size_layers))
+        decoder_layers = []
+        for idx, (size, activation) in enumerate(reversed_layers[:-1]):
+            # While second to last element no reached
+            # --> Activation function in encoder
+            if idx < len(reversed_layers[:-1]) - 1:
+                decoder_layers.append(nn.Linear(size, reversed_layers[idx + 1][0]))
+
+                # Checks if activation is viable
+                if activation is not None:
+                    assert isinstance(
+                        activation, nn.Module
+                    ), f"Activation should be of type {nn.Module}"
+                    decoder_layers.append(activation)
+            else:
+                decoder_layers.append(nn.Linear(size, reversed_layers[idx + 1][0]))
+
+        print("Constructed decoder...")
+
+        return nn.Sequential(*decoder_layers)
 
     def encode(self, x, eps: float = 1e-8):
         """

@@ -17,8 +17,6 @@ import torch.nn.functional as f
 
 
 # == AE Output ==
-
-
 @dataclass
 class AEOutput:
     """
@@ -26,8 +24,8 @@ class AEOutput:
 
     Attributes:
         z_sample (torch.Tensor): The sampled value of the latent variable z.
-        x_recon (torch.Tensor): The reconstructed output from the AE.
-        loss (torch.Tensor): The overall loss of the AE.
+        x_recon (torch.Tensor): The reconstructed output from the VAE.
+        loss (torch.Tensor): The overall loss of the VAE.
     """
 
     z_sample: torch.Tensor
@@ -49,67 +47,83 @@ class Autoencoder(nn.Module):
     def __init__(
         self,
         size_layers: list[tuple[int, nn.Module]],
-        criterion: nn.modules.loss._Loss,
-        learning_rate: float = 1e-1,
-        weight_decay: float = 1e-8,
-        optimizer: torch.optim.Optimizer = torch.optim.Adam,
+        loss_function,
+        optimizer,
+        learning_rate=1e-2,
+        weight_decay=1e-3,
     ):
         super(Autoencoder, self).__init__()
 
-        ## Encoder architecture
-        self.encoder_layers = []
-        # Only iterate until second to last element
-        # --> Idx of last element called
-        for idx, (size, activation) in enumerate(size_layers[:-1]):
-            # While second to last element no reached
-            # --> Activation function in decoder
-            if idx < len(size_layers[:-1]) - 1:
-                self.encoder_layers.append(nn.Linear(size, size_layers[idx + 1][0]))
+        self.size_layers = size_layers
+        self.encoder = self._build_encoder()
+        self.decoder = self._build_decoder()
 
-                # Checks if activation is viable
-                if activation is not None:
-                    assert isinstance(
-                        activation, nn.Module
-                    ), f"Activation should be of type {nn.Module}"
-                    self.encoder_layers.append(activation)
-            else:
-                self.encoder_layers.append(nn.Linear(size, size_layers[idx + 1][0]))
-
-        self.encoder = nn.Sequential(*self.encoder_layers)
-
-        print("Constructed encoder...")
-
-        ## Decoder archtitecture
-        # Reverse to build decoder (hourglass)
-        reversed_layers = list(reversed(size_layers))
-        self.decoder_layers = []
-        for idx, (size, activation) in enumerate(reversed_layers[:-1]):
-            # While second to last element no reached
-            # --> Activation function in encoder
-            if idx < len(reversed_layers[:-1]) - 1:
-                self.decoder_layers.append(nn.Linear(size, reversed_layers[idx + 1][0]))
-
-                # Checks if activation is viable
-                if activation is not None:
-                    assert isinstance(
-                        activation, nn.Module
-                    ), f"Activation should be of type {nn.Module}"
-                    self.decoder_layers.append(activation)
-            else:
-                self.decoder_layers.append(nn.Linear(size, reversed_layers[idx + 1][0]))
-
-        self.decoder = nn.Sequential(*self.decoder_layers)
-
-        print("Constructed decoder...")
-
-        self.criterion = criterion
-        self.learning_rate = learning_rate
+        self.loss_function = loss_function
         self.optimizer = optimizer(
-            params=self.parameters(), lr=learning_rate, weight_decay=weight_decay
+            self.parameters(), lr=learning_rate, weight_decay=weight_decay
         )
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.to(self.device)
+
+    def _build_encoder(self) -> nn.Sequential:
+        """
+        Builds the encoder architecture
+
+        Args:
+            size_layers (list(tuple)): Encoder Architecture
+        """
+        ## Encoder architecture
+        encoder_layers = []
+        # Only iterate until second to last element
+        # --> Idx of last element called
+        for idx, (size, activation) in enumerate(self.size_layers[:-1]):
+            # While second to last element no reached
+            # --> Activation function in decoder
+            if idx < len(self.size_layers[:-1]) - 1:
+                encoder_layers.append(nn.Linear(size, self.size_layers[idx + 1][0]))
+
+                # Checks if activation is viable
+                if activation is not None:
+                    assert isinstance(
+                        activation, nn.Module
+                    ), f"Activation should be of type {nn.Module}"
+                    encoder_layers.append(activation)
+            else:
+                encoder_layers.append(nn.Linear(size, self.size_layers[idx + 1][0]))
+
+        print("Constructed encoder...")
+
+        return nn.Sequential(*encoder_layers)
+
+    def _build_decoder(self) -> nn.Sequential:
+        """
+        Builds the decoder architecture
+
+        Args:
+            size_layers (list(tuple)): Decoder Architecture
+        """
+        # Reverse to build decoder (hourglass)
+        reversed_layers = list(reversed(self.size_layers))
+        decoder_layers = []
+        for idx, (size, activation) in enumerate(reversed_layers[:-1]):
+            # While second to last element no reached
+            # --> Activation function in encoder
+            if idx < len(reversed_layers[:-1]) - 1:
+                decoder_layers.append(nn.Linear(size, reversed_layers[idx + 1][0]))
+
+                # Checks if activation is viable
+                if activation is not None:
+                    assert isinstance(
+                        activation, nn.Module
+                    ), f"Activation should be of type {nn.Module}"
+                    decoder_layers.append(activation)
+            else:
+                decoder_layers.append(nn.Linear(size, reversed_layers[idx + 1][0]))
+
+        print("Constructed decoder...")
+
+        return nn.Sequential(*decoder_layers)
 
     def encode(self, x):
         """
@@ -121,7 +135,7 @@ class Autoencoder(nn.Module):
         Returns:
             torch.Tensor: Input data compressed to latent space.
         """
-        return x
+        return self.encoder(x)
 
     def decode(self, z):
         """
@@ -133,7 +147,7 @@ class Autoencoder(nn.Module):
         Returns:
             torch.Tensor: Reconstructed data in the original input space.
         """
-        return z
+        return self.decoder(z)
 
     def forward(self, x, compute_loss: bool = True):
         """
@@ -144,7 +158,7 @@ class Autoencoder(nn.Module):
             compute_loss (bool): Whether to compute the loss or not.
 
         Returns:
-            VAEOutput: VAE output dataclass.
+            AEOutput: VAE output dataclass.
         """
         z = self.encode(x)
         recon_x = self.decode(z)
