@@ -9,15 +9,25 @@ from tqdm import tqdm
 # === Functions ===
 
 
-def train(model, dataloader, optimizer, prev_updates, writer=None, device="cpu"):
+def train(
+    model,
+    dataloader,
+    optimizer,
+    prev_updates,
+    device,
+    model_type: str = None,
+    writer=None,
+):
     """
     Trains the model on the given data.
 
     Args:
         model (nn.Module): The model to train.
         dataloader (torch.utils.data.DataLoader): The data loader.
-        loss_fn: The loss function.
-        optimizer: The optimizer.
+        optimizer (torch.optim.Optim): The optimizer.
+        prev_updates (int): Number of previous updates.
+        device (str): Device.
+        writer: The TensorBoard writer.
     """
     model.train()  # Set the model to training mode
 
@@ -31,7 +41,7 @@ def train(model, dataloader, optimizer, prev_updates, writer=None, device="cpu")
         output = model(data)  # Forward pass
         loss = output.loss
 
-        # loss.backward()
+        loss.backward()
 
         if n_upd % 100 == 0:
             # Calculate and log gradient norms
@@ -50,6 +60,13 @@ def train(model, dataloader, optimizer, prev_updates, writer=None, device="cpu")
                 global_step = n_upd
                 writer.add_scalar("Loss/Train", loss.item(), global_step)
                 writer.add_scalar("GradNorm/Train", total_norm, global_step)
+                if model_type == "vae":
+                    writer.add_scalar(
+                        "Loss/Train/BCE", output.loss_recon.item(), global_step
+                    )
+                    writer.add_scalar(
+                        "Loss/Train/KLD", output.loss_kl.item(), global_step
+                    )
 
         # gradient clipping
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -59,7 +76,7 @@ def train(model, dataloader, optimizer, prev_updates, writer=None, device="cpu")
     return prev_updates + len(dataloader)
 
 
-def test(model, dataloader, cur_step, writer=None, device="cpu"):
+def test(model, dataloader, cur_step, device, model_type: str = None, writer=None):
     """
     Tests the model on the given data.
 
@@ -75,6 +92,7 @@ def test(model, dataloader, cur_step, writer=None, device="cpu"):
     with torch.no_grad():
         for data in tqdm(dataloader, desc="Testing"):
             data = data.to(device)
+            data = data.view(data.size(0), -1)  # Flatten the data
 
             output = model(data, compute_loss=True)  # Forward pass
 
@@ -85,3 +103,14 @@ def test(model, dataloader, cur_step, writer=None, device="cpu"):
 
     if writer is not None:
         writer.add_scalar("Loss/Test", test_loss, global_step=cur_step)
+        if model_type == "vae":
+            writer.add_scalar(
+                "Loss/Test/BCE", output.loss_recon.item(), global_step=cur_step
+            )
+            writer.add_scalar(
+                "Loss/Test/KLD", output.loss_kl.item(), global_step=cur_step
+            )
+
+        # Log random samples from the latent space
+        # z = torch.randn(16, latent_dim).to(device)
+        # samples = model.decode(z)
