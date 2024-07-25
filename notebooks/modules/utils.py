@@ -82,7 +82,7 @@ import torch.optim as optim
 
 
 __author__ = "Christian Kolland"
-__version__ = "0.0.2"
+__version__ = "0.2"
 
 ## Constants
 _ACTIVATION_FUNCTIONS = ["relu", "silu"]
