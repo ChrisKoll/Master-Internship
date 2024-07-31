@@ -1,5 +1,6 @@
 {
     "model": {
+        "version": "0-1",
         "model_type": "ae",
         "layers": {
             "encoder": [
