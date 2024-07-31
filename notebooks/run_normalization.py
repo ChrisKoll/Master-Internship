@@ -29,6 +29,7 @@ import anndata as ad
 from scipy.sparse import csr_matrix
 
 # Self-built modules
+from modules.logging_setup import main_logger
 import modules.normalization as normalization
 
 __author__ = "Christian Kolland"
@@ -46,13 +47,12 @@ def load_data(file_path: str) -> ad.AnnData:
 
     Example:
         >>> adata = load_data("path/to/data.h5ad")
-        Data loaded...
     """
     # Load AnnData object
     adata = ad.read_h5ad(filename=file_path)
 
-    # Command line output
-    print("Data loaded...")
+    # Logging
+    main_logger.info(f"Loaded dataset: {os.path.basename(file_path)}")
 
     return adata
 
@@ -74,9 +74,8 @@ def save_layer(adata: ad.AnnData, normalized_data: csr_matrix, filename: str) ->
     # Write updated AnnData object to file
     adata.write_h5ad(filename=filename)
 
-    # Command line output
-    print("Saved normalized data...")
-    print("Finished!")
+    # Logging
+    main_logger.info(f"Saved normalized data")
 
 
 def main() -> None:
@@ -99,31 +98,31 @@ def main() -> None:
     adata = load_data(file_path=args.data)
 
     ## Started CPM normalization
-    # Command line output
-    print("Finished CPM normalization...")
+    # Logging
+    main_logger.info(f"Start CPM normalization")
 
     cpm_normalized = normalization.sparse_cpm(adata.X)
 
-    # Command line output
-    print("Finished CPM normalization...")
+    # Logging
+    main_logger.info(f"Finished CPM normalization")
 
     ## Log transformation
-    # Command line output
-    print("Started log transformation...")
+    # Logging
+    main_logger.info(f"Start Log transformation")
 
     log_transformed = cpm_normalized.log1p()
 
-    # Command line output
-    print("Finished log transformation...")
+    # Logging
+    main_logger.info(f"Finished Log transformation")
 
     ## Min-max normalization
-    # Command line output
-    print("Started min-max normalization...")
+    # Logging
+    main_logger.info(f"Start Min-Max normalization")
 
     min_max_normalized = normalization.sparse_min_max(log_transformed)
 
-    # Command line output
-    print("Finished min-max normalization...")
+    # Logging
+    main_logger.info(f"Finished Min-Max normalization")
 
     ## Save data
     # Use the base name of the input file with a modified suffix or a different file name
