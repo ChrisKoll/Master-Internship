@@ -35,6 +35,9 @@ import logging
 import os
 from typing import Optional
 
+__author__ = "Christian Kolland"
+__version__ = 1.1
+
 
 def setup_debug_logger(log_dir: str, log_file: Optional[str] = None) -> logging.Logger:
     """
