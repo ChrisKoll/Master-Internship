@@ -1,15 +1,69 @@
 """
-Collection of normalization methods used in 'normalization.ipynb'
+Collection of normalization methods.
+
+This module provides several normalization methods for count matrices, including
+Counts Per Million (CPM) normalization, log transformation, and min-max scaling.
+Both dense (numpy arrays) and sparse (scipy CSR matrices) formats are supported.
+
+Functions:
+    dense_cpm(count_matrix: np.array) -> np.array: 
+        Calculates the CPM normalization for a dense count matrix.
+
+    sparse_cpm(sp_matrix: csr_matrix) -> csr_matrix: 
+        Calculates the CPM normalization for a sparse count matrix.
+
+    dense_log(count_matrix: np.array) -> np.array: 
+        Calculates the natural log transformation for a dense count matrix.
+
+    dense_min_max(count_matrix: np.array, min_val: int = 0, max_val: int = 1) -> np.array: 
+        Rescales the values for each feature in a dense count matrix to the given range.
+
+    sparse_min_max(sp_matrix: csr_matrix, min_val: int = 0, max_val: int = 1) -> csr_matrix: 
+        Rescales the values for each feature in a sparse count matrix to the given range.
+
+Examples:
+    # Dense CPM normalization
+    >>> dense_matrix = np.array([[10, 20, 30], [40, 50, 60]])
+    >>> cpm_normalized = dense_cpm(dense_matrix)
+    >>> print(cpm_normalized)
+    [[100000. 200000. 300000.]
+     [266666.66666667 333333.33333333 400000.]]
+
+    # Sparse CPM normalization
+    >>> sparse_matrix = csr_matrix([[10, 20, 30], [40, 50, 60]])
+    >>> cpm_normalized_sparse = sparse_cpm(sparse_matrix)
+    >>> print(cpm_normalized_sparse.toarray())
+    [[100000. 200000. 300000.]
+     [266666.66666667 333333.33333333 400000.]]
+
+    # Dense log transformation
+    >>> log_transformed = dense_log(dense_matrix)
+    >>> print(log_transformed)
+    [[2.39789527 3.04452244 3.4339872 ]
+     [3.71357207 3.93182563 4.11087386]]
+
+    # Dense min-max normalization
+    >>> min_max_normalized = dense_min_max(dense_matrix, 0, 1)
+    >>> print(min_max_normalized)
+    [[0.  0.  0. ]
+     [1.  1.  1. ]]
+
+    # Sparse min-max normalization
+    >>> min_max_normalized_sparse = sparse_min_max(sparse_matrix, 0, 1)
+    >>> print(min_max_normalized_sparse.toarray())
+    [[0.  0.  0. ]
+     [1.  1.  1. ]
 """
 
-# === Libraries ===
+# Third-party imports
 import numpy as np
 from scipy.sparse import csr_matrix, diags
 
-# === Constants ===
-CPM_SCALING_FACT = 1e6
+__author__ = "Christian Kolland"
+__version__ = 1.0
 
-# === Functions ===
+# Constants
+CPM_SCALING_FACT = 1e6
 
 
 def dense_cpm(count_matrix: np.array) -> np.array:
