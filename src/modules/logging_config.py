@@ -20,11 +20,9 @@ Usage:
     To configure a logger, call the respective function with the desired log directory and optional log file name.
 
 Example:
-    >>> from logging_config import setup_debug_logger
     >>> logger = setup_debug_logger('/path/to/log/dir', 'debug.log')
     >>> logger.debug('This is a debug message.')
 
-    >>> from logging_config import setup_run_logger
     >>> logger = setup_run_logger('/path/to/log/dir', 'run.log')
     >>> logger.info('This is an info message.')
 """

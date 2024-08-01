@@ -5,8 +5,6 @@ This module defines a custom dataset class, `SparseDataset`, which inherits from
 PyTorch's `Dataset` class. The dataset is designed to handle sparse data efficiently.
 
 Example:
-    >>> from scipy.sparse import csr_matrix
-    >>> import torch
     >>> sparse_data = csr_matrix([[0, 1, 0], [4, 0, 6]])
     >>> dataset = SparseDataset(sparse_data)
     >>> loader = torch.utils.data.DataLoader(dataset, batch_size=1)
