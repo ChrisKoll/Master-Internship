@@ -14,10 +14,10 @@ Functions:
 import argparse
 import os
 
-# Self-build modules
+# Self-built modules
 import src.data_transformation.methods as mtd
-import src.utils.io as io
-from src.utils.logging import setup_debug_logger
+import utils.io_utils as io_utils
+from utils.logging_utils import setup_logger
 
 __author__ = "Christian Kolland"
 __version__ = 1.0
@@ -27,7 +27,7 @@ _PARSER_DESC = "Perform data transformation on single-cell data."
 _ARG_DATA_HELP = "Path to the input data file (e.g., .h5ad file) for processing."
 _ARG_LOG_HELP = "Directory path where the log file will be saved. Defaults to 'logs/'."
 _ARG_NAME_HELP = (
-    "Optional name of the log file. If not provided, a default name will be used."
+    "Optional name of the log file. If not provided, a name will be generated."
 )
 
 
@@ -47,7 +47,7 @@ def standard_transform() -> None:
         Run the following command in the terminal:
         $ python transform.py -d data/input_data.h5ad -l /path/to/logs/ -n log_file_name
     """
-    # Command line parser
+    # Add cmd parser
     parser = argparse.ArgumentParser(description=_PARSER_DESC)
 
     # Add arguments
@@ -59,9 +59,10 @@ def standard_transform() -> None:
     args = parser.parse_args()
 
     # Initialize logger
-    logger = setup_debug_logger(args.log, args.name)
+    logger = setup_logger(args.log, args.name)
 
-    adata = io.load_adata(args.data, logger)
+    # >>> Functionality starts here
+    adata = io_utils.load_adata(args.data, logger)
 
     # CPM normalization
     cpm_normalized = mtd.sparse_cpm(adata.X, logger)
@@ -74,7 +75,7 @@ def standard_transform() -> None:
 
     # Use the base name of the input file with a modified suffix
     filename = os.path.splitext(os.path.basename(args.data))[0] + "_normalized.h5ad"
-    io.save_adata_layer(
+    io_utils.save_adata_layer(
         adata,
         transformed_data=min_max_scaled,
         layer_name="min_max_scaled",
