@@ -1,0 +1,76 @@
+{
+    "model": {
+        "version": "1-0",
+        "model_type": "vae",
+        "layers": {
+            "encoder": [
+                {
+                    "role": "input",
+                    "type": "linear",
+                    "in_dimension": 33538,
+                    "out_dimension": 16769,
+                    "activation": "silu"
+                },
+                {
+                    "role": "input",
+                    "type": "linear",
+                    "in_dimension": 16769,
+                    "out_dimension": 8384,
+                    "activation": "silu"
+                },
+                {
+                    "role": "hidden",
+                    "type": "linear",
+                    "in_dimension": 8384,
+                    "out_dimension": 4192,
+                    "activation": "silu"
+                },
+                {
+                    "role": "latent_space",
+                    "type": "linear",
+                    "in_dimension": 4192,
+                    "out_dimension": 200
+                }
+            ],
+            "decoder": [
+                {
+                    "role": "input",
+                    "type": "linear",
+                    "in_dimension": 200,
+                    "out_dimension": 4192,
+                    "activation": "silu"
+                },
+                {
+                    "role": "hidden",
+                    "type": "linear",
+                    "in_dimension": 4192,
+                    "out_dimension": 8384,
+                    "activation": "silu"
+                },
+                {
+                    "role": "hidden",
+                    "type": "linear",
+                    "in_dimension": 8384,
+                    "out_dimension": 16769,
+                    "activation": "silu"
+                },
+                {
+                    "role": "output",
+                    "type": "linear",
+                    "in_dimension": 16769,
+                    "out_dimension": 33538
+                }
+            ]
+        },
+        "loss_function": "mse",
+        "optimization": {
+            "optimizer": "adam",
+            "learning_rate": 1e-2,
+            "weight_decay": 1e-3
+        }
+    },
+    "training": {
+        "batch_size": 256,
+        "training_epochs": 50
+    }
+}
