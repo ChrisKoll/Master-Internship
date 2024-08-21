@@ -37,9 +37,6 @@ def load_adata(path_to_data: str, logger: Optional[Logger] = None) -> AnnData:
 
     Returns:
         AnnData: The loaded AnnData object.
-
-    Example:
-        >>> adata = load_adata("data/input_data.h5ad", logger)
     """
     if logger is not None:
         logger.info(f"Start loading dataset: {basename(path_to_data)}")
@@ -68,9 +65,6 @@ def load_adata_layer(
 
     Returns:
         Tensor: The specified layer of the AnnData object as a PyTorch tensor.
-
-    Example:
-        >>> layer_data = load_adata_layer("data/input_data.h5ad", "transformed_data", logger)
     """
     if logger is not None:
         logger.info(f"Start loading dataset: {basename(path_to_data)}")
@@ -107,9 +101,6 @@ def save_adata_layer(
 
     Returns:
         None
-
-    Example:
-        >>> save_adata_layer(adata, transformed_data, "layer_name", "output_data.h5ad", logger)
     """
     adata.layers[layer_name] = transformed_data
     adata.write_h5ad(filename=filename)

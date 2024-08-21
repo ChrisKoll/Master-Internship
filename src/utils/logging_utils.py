@@ -1,5 +1,5 @@
 """
-Module Name: logger_setup
+Logging Utilities Module.
 
 This module provides functions for setting up loggers with different logging levels
 (INFO and DEBUG) that can log messages to both console and files. The setup functions 

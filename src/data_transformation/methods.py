@@ -42,12 +42,6 @@ def dense_cpm(count_matrix: np.ndarray) -> np.ndarray:
 
     Returns:
         np.ndarray: CPM-normalized count matrix.
-
-    Example:
-        >>> count_matrix = np.array([[100, 200, 300], [400, 500, 600]])
-        >>> dense_cpm(count_matrix)
-        array([[100000., 200000., 300000.],
-               [266666.66666667, 333333.33333333, 400000.]])
     """
     # Sums over all rows to get total counts
     cell_counts = np.sum(count_matrix, axis=1)
@@ -69,12 +63,6 @@ def dense_log(count_matrix: np.ndarray) -> np.ndarray:
 
     Returns:
         np.ndarray: Log-transformed count matrix.
-
-    Example:
-        >>> count_matrix = np.array([[0, 2, 3], [4, 0, 6]])
-        >>> dense_log(count_matrix)
-        array([[0.        , 1.09861229, 1.38629436],
-               [1.60943791, 0.        , 1.94591015]])
     """
     # Calculate log values
     # -> +1 to each value, to prevent expression = 0
@@ -98,12 +86,6 @@ def dense_min_max(
 
     Returns:
         np.ndarray: Min-max rescaled count matrix.
-
-    Example:
-        >>> count_matrix = np.array([[1, 2, 3], [4, 5, 6]])
-        >>> dense_min_max(count_matrix, 0, 1)
-        array([[0. , 0. , 0. ],
-               [1. , 1. , 1. ]])
     """
     # Determines min value for each matrix column
     min_data = np.min(count_matrix, axis=0)
@@ -131,13 +113,6 @@ def sparse_cpm(sp_matrix: csr_matrix, logger: Optional[Logger] = None) -> csr_ma
 
     Returns:
         csr_matrix: CPM-normalized sparse count matrix.
-
-    Example:
-        >>> from scipy.sparse import csr_matrix
-        >>> count_matrix = csr_matrix([[100, 200, 300], [400, 500, 600]])
-        >>> sparse_cpm(count_matrix)
-        <2x3 sparse matrix of type '<class 'numpy.float64'>'
-            with 6 stored elements in Compressed Sparse Row format>
     """
     if logger is not None:
         logger.info("Start CPM normalization")
@@ -171,13 +146,6 @@ def sparse_log(
 
     Returns:
         csr_matrix: Log-transformed sparse count matrix.
-
-    Example:
-        >>> from scipy.sparse import csr_matrix
-        >>> count_matrix = csr_matrix([[0, 2, 3], [4, 0, 6]])
-        >>> sparse_log(count_matrix)
-        <2x3 sparse matrix of type '<class 'numpy.float64'>'
-            with 6 stored elements in Compressed Sparse Row format>
     """
     if logger is not None:
         logger.info("Start log transformation")
@@ -210,13 +178,6 @@ def sparse_min_max(
 
     Returns:
         csr_matrix: Min-max rescaled sparse count matrix.
-
-    Example:
-        >>> from scipy.sparse import csr_matrix
-        >>> count_matrix = csr_matrix([[1, 2, 3], [4, 5, 6]])
-        >>> sparse_min_max(count_matrix, 0, 1)
-        <2x3 sparse matrix of type '<class 'numpy.float64'>'
-            with 6 stored elements in Compressed Sparse Row format>
     """
     if logger is not None:
         logger.info("Start log transformation")

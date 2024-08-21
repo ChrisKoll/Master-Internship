@@ -110,9 +110,6 @@ def split_data(
     Returns:
         Tuple[DataLoader, DataLoader]: A tuple containing the DataLoader for the training set
         and the DataLoader for the test set.
-
-    Example:
-        >>> train_loader, test_loader = split_data(data_tensor, logger=logger)
     """
     # Calculate the number of entries (from percentage), used as training data
     # Default value -> 80%
@@ -177,9 +174,6 @@ def split_data_kfcv(
     Returns:
         Tuple[AnnData, DataLoader]: A tuple containing the training AnnData object and the
         DataLoader for the test set.
-
-    Example:
-        >>> train_data, test_loader = split_data_kfcv(adata, "counts_layer", logger=logger)
     """
     # Calculate the number of entries (from percentage), used as training data
     # Default value -> 80%
@@ -233,9 +227,6 @@ def create_fold(
 
     Returns:
         Tuple[DataLoader, DataLoader]: A tuple containing the training and validation DataLoaders.
-
-    Example:
-        train_loader, val_loader = create_fold(adata, "donor_1", "counts_layer", logger=logger)
     """
     # Select the data for training and validation based on the donor column
     train_split = adata[adata.obs["donor"] != donor].layers[data_layer]
