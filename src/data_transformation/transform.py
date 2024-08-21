@@ -16,8 +16,8 @@ import os
 
 # Self-built modules
 import src.data_transformation.methods as mtd
-import utils.io_utils as io_utils
-from utils.logging_utils import setup_logger
+import src.utils.io_utils as io_utils
+from src.utils.logging_utils import setup_logger
 
 __author__ = "Christian Kolland"
 __version__ = 1.0
