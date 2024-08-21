@@ -180,7 +180,7 @@ def sparse_min_max(
         csr_matrix: Min-max rescaled sparse count matrix.
     """
     if logger is not None:
-        logger.info("Start log transformation")
+        logger.info(f"Start Min-Max scaling to range: {min_val} - {max_val}")
 
     # Change matrix type so value are save correctly
     if sp_matrix.dtype != float:
@@ -191,7 +191,7 @@ def sparse_min_max(
     sp_matrix = sp_matrix.tocsc()
 
     # Iterate over all features
-    for idx in tqdm(range(sp_matrix.shape[1]), desc="Normalize features"):
+    for idx in tqdm(range(sp_matrix.shape[1]), desc="Scale features"):
         feature_data = sp_matrix[:, idx]
         # Calculate normalized values for feature
         sp_matrix[:, idx] = (feature_data - feature_data.min()) / (
@@ -200,5 +200,8 @@ def sparse_min_max(
 
     # Convert back to CSR format
     min_max_scaled = sp_matrix.tocsr()
+
+    if logger is not None:
+        logger.info(f"Finished Min-Max scaling")
 
     return min_max_scaled
