@@ -15,12 +15,13 @@ Classes:
 """
 
 # Standard imports
+from io import BytesIO
 from logging import Logger
-from os.path import basename
 from typing import Optional, Tuple
 
 # Third-party imports
 from anndata import AnnData
+import matplotlib.pyplot as plt
 from scipy.sparse import csr_matrix
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -189,8 +190,8 @@ def split_data_kfcv(
 
     # Keep adata object for k-fold manipulation
     # Only convert test data to sparse dataset
-    train_data = adata[adata[train_split, :]]
-    test_data = SparseDataset(adata[test_split, :].layers[layer_name])
+    train_data = adata[train_split.tolist(), :]
+    test_data = SparseDataset(adata.layers[layer_name][test_split, :])
 
     if logger is not None:
         logger.info(f"Training split created. Contains {len(train_split)} entries")
@@ -236,8 +237,8 @@ def create_fold(
     val_data = SparseDataset(val_split)
 
     if logger is not None:
-        logger.info(f"Training fold created. Contains {len(train_split)} entries")
-        logger.info(f"Validation fold created. Contains {len(val_split)} entries")
+        logger.info(f"Training fold created. Contains {train_split.shape[0]} entries")
+        logger.info(f"Validation fold created. Contains {val_split.shape[0]} entries")
 
     # Shuffle training data to prevent batch effect
     train_loader = DataLoader(
@@ -253,3 +254,39 @@ def create_fold(
     )
 
     return train_loader, val_loader
+
+
+def plot_expression_profiles(original, reconstructed):
+    """Docstring."""
+    original_dense = original.reshape(-1).tolist()
+    reconstructed_dense = reconstructed.reshape(-1).tolist()
+    x_ticks = [i for i in range(len(original))]
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    ax.plot(
+        x_ticks,
+        original_dense,
+        marker="o",
+        linestyle="-",
+        color="y",
+        label="Original",
+    )
+    ax.plot(
+        x_ticks,
+        reconstructed_dense,
+        marker="x",
+        linestyle="--",
+        color="b",
+        label="Recon",
+    )
+
+    # Adding titles and labels
+    ax.set_title("Expression Profile Comparison")
+    ax.set_xlabel("Gene Index")
+    ax.set_ylabel("Expression Level")
+
+    # Add Legend
+    ax.legend()
+
+    return fig
