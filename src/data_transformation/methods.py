@@ -203,14 +203,6 @@ def sparse_min_max(
                 maxs[idx] - mins[idx]
             )
 
-    # # Iterate over all features
-    # for idx in tqdm(range(sp_matrix.shape[1]), desc="Scale features"):
-    #     feature_data = sp_matrix[:, idx]
-    #     # Calculate normalized values for feature
-    #     sp_matrix[:, idx] = (feature_data - feature_data.min()) / (
-    #         feature_data.max() - feature_data.min() + _EPSILON
-    #     ) * (max_val - min_val) + min_val
-
     # Convert back to CSR format
     min_max_scaled = sp_matrix.tocsr()
 
