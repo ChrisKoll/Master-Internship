@@ -161,26 +161,22 @@ def sparse_log(
 
 def sparse_min_max(
     sp_matrix: csr_matrix,
-    min_val: int = 0,
-    max_val: int = 1,
     logger: Optional[Logger] = None,
 ) -> csr_matrix:
     """
-    Rescale a sparse count matrix to a specified range using min-max scaling.
+    Rescale a sparse count matrix to a range of 0 - 1 using min-max scaling.
 
     This function rescales the values for each feature (gene) in a sparse count matrix to the specified range.
 
     Args:
         sp_matrix (csr_matrix): Sparse count matrix (CSR format).
-        min_val (float, optional): Minimum value after rescaling. Defaults to 0.
-        max_val (float, optional): Maximum value after rescaling. Defaults to 1.
         logger (Optional[Logger]): Logger for progress messages. Defaults to None.
 
     Returns:
         csr_matrix: Min-max rescaled sparse count matrix.
     """
     if logger is not None:
-        logger.info(f"Start Min-Max scaling to range: {min_val} - {max_val}")
+        logger.info(f"Start Min-Max scaling to range: 0-1")
 
     # Change matrix type so value are save correctly
     if sp_matrix.dtype != float:
@@ -190,13 +186,30 @@ def sparse_min_max(
     # -> Improves computation
     sp_matrix = sp_matrix.tocsc()
 
+    mins = sp_matrix.min(axis=0).A.ravel()
+    maxs = sp_matrix.max(axis=0).A.ravel()
+
     # Iterate over all features
     for idx in tqdm(range(sp_matrix.shape[1]), desc="Scale features"):
-        feature_data = sp_matrix[:, idx]
-        # Calculate normalized values for feature
-        sp_matrix[:, idx] = (feature_data - feature_data.min()) / (
-            feature_data.max() - feature_data.min() + _EPSILON
-        ) * (max_val - min_val) + min_val
+        feature_data = sp_matrix[:, idx].data
+
+        if feature_data.size > 0:
+            # Find the indices of the elements in the specified column
+            start_idx = sp_matrix.indptr[idx]
+            end_idx = sp_matrix.indptr[idx + 1]
+
+            # Calculate scaled values for feature
+            sp_matrix.data[start_idx:end_idx] = (feature_data - mins[idx]) / (
+                maxs[idx] - mins[idx]
+            )
+
+    # # Iterate over all features
+    # for idx in tqdm(range(sp_matrix.shape[1]), desc="Scale features"):
+    #     feature_data = sp_matrix[:, idx]
+    #     # Calculate normalized values for feature
+    #     sp_matrix[:, idx] = (feature_data - feature_data.min()) / (
+    #         feature_data.max() - feature_data.min() + _EPSILON
+    #     ) * (max_val - min_val) + min_val
 
     # Convert back to CSR format
     min_max_scaled = sp_matrix.tocsr()
