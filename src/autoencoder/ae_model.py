@@ -11,9 +11,7 @@ Classes:
 """
 
 __author__ = "Christian Kolland"
-__version__ = "0.1"
-
-## Imports
+__version__ = "1.0"
 
 # Standard imports
 from dataclasses import dataclass
@@ -24,7 +22,6 @@ import torch
 import torch.nn as nn
 
 
-## AE Output
 @dataclass
 class AEOutput:
     """
@@ -41,7 +38,6 @@ class AEOutput:
     loss: torch.Tensor
 
 
-## Autoencoder
 class Autoencoder(nn.Module):
     """
     Autoencoder (AE) class.
