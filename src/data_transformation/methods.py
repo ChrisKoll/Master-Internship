@@ -186,8 +186,8 @@ def sparse_min_max(
     # -> Improves computation
     sp_matrix = sp_matrix.tocsc()
 
-    mins = sp_matrix.min(axis=0).A.ravel()
-    maxs = sp_matrix.max(axis=0).A.ravel()
+    mins = sp_matrix.min(axis=0).toarray().ravel()
+    maxs = sp_matrix.max(axis=0).tparray().ravel()
 
     # Iterate over all features
     for idx in tqdm(range(sp_matrix.shape[1]), desc="Scale features"):
