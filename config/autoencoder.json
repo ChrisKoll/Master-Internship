@@ -1,6 +1,6 @@
 {
     "model": {
-        "version": "1-0",
+        "name": "AE_SiLU_MSE",
         "model_type": "ae",
         "layers": {
             "encoder": [
@@ -12,7 +12,7 @@
                     "activation": "silu"
                 },
                 {
-                    "role": "input",
+                    "role": "hidden",
                     "type": "linear",
                     "in_dimension": 16769,
                     "out_dimension": 8384,
@@ -29,7 +29,8 @@
                     "role": "latent_space",
                     "type": "linear",
                     "in_dimension": 4192,
-                    "out_dimension": 200
+                    "out_dimension": 200,
+                    "activation": ""
                 }
             ],
             "decoder": [
@@ -58,7 +59,8 @@
                     "role": "output",
                     "type": "linear",
                     "in_dimension": 16769,
-                    "out_dimension": 33538
+                    "out_dimension": 33538,
+                    "activation": ""
                 }
             ]
         },

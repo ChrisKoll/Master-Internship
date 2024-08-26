@@ -1,7 +1,7 @@
 {
     "model": {
-        "version": "0-1",
-        "model_type": "ae",
+        "name": "AE_test",
+        "type": "ae",
         "layers": {
             "encoder": [
                 {
@@ -22,7 +22,8 @@
                     "role": "latent_space",
                     "type": "linear",
                     "in_dimension": 300,
-                    "out_dimension": 50
+                    "out_dimension": 50,
+                    "activation": ""
                 }
             ],
             "decoder": [
@@ -44,7 +45,8 @@
                     "role": "output",
                     "type": "linear",
                     "in_dimension": 600,
-                    "out_dimension": 1000
+                    "out_dimension": 1000,
+                    "activation": ""
                 }
             ]
         },
