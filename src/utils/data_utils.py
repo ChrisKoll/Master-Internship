@@ -5,20 +5,23 @@ This module provides utilities for handling sparse single-cell data in a PyTorch
 environment. It includes a custom PyTorch dataset class for sparse matrices and functions
 to split data for training and testing, including support for k-fold cross-validation.
 
+Classes:
+    - SparseDataset: A custom PyTorch Dataset class for sparse data.
+
 Functions:
     - split_data: Splits a dense tensor into training and test datasets.
     - split_data_kfcv: Splits an AnnData object into training and test datasets using a specified layer.
     - create_fold: Creates training and validation folds based on a donor column.
+    - plot_recon_performance: Generates a scatter plot comparing original and reconstructed data.
+    - plot_latent_space: Generates a scatter plot of the PCA-transformed latent space.
 """
 
 # Standard imports
-from dataclasses import dataclass
 from logging import Logger
-from typing import Optional, Tuple
+from typing import Literal, Optional
 
 # Third-party imports
 from anndata import AnnData
-import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -31,6 +34,12 @@ from torch.utils.data import Dataset, DataLoader
 __author__ = "Christian Kolland"
 __version__ = "1.0"
 
+# Constants
+_DIM_RED = {
+    "Sample": {"Sum": lambda x: x.sum(axis=1), "Mean": lambda x: x.mean(axis=1)},
+    "Gene": {"Sum": lambda x: x.sum(axis=0), "Mean": lambda x: x.mean(axis=0)},
+}
+
 
 class SparseDataset(Dataset):
     """
@@ -42,18 +51,20 @@ class SparseDataset(Dataset):
 
     Attributes:
         sparse_data (csr_matrix): A SciPy sparse matrix (CSR format) containing the data.
+        anno_cell_type (List[str]): List of annotation labels corresponding to the data rows.
 
     Args:
         sparse_data (csr_matrix): A sparse matrix in Compressed Sparse Row (CSR) format.
+        anno_cell_type (List[str]): Annotation labels corresponding to the data rows.
     """
 
-    def __init__(self, sparse_data: csr_matrix, anno_cell_type: list):
+    def __init__(self, sparse_data: csr_matrix, anno_cell_type: list[str]):
         """
         Initializes the SparseDataset with sparse data.
 
         Args:
             sparse_data (csr_matrix): The sparse matrix data to be used by the dataset.
-            cell_type_anno (list): Annotation labels corresponding to the data rows.
+            anno_cell_type (List[str]): Annotation labels corresponding to the data rows.
         """
         self.sparse_data = sparse_data
         self.anno_cell_type = anno_cell_type
@@ -67,7 +78,7 @@ class SparseDataset(Dataset):
         """
         return self.sparse_data.shape[0]
 
-    def __getitem__(self, index: int) -> torch.Tensor:
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, str]:
         """
         Retrieves a sample from the dataset.
 
@@ -75,7 +86,7 @@ class SparseDataset(Dataset):
             index (int): The index of the sample to retrieve.
 
         Returns:
-            torch.Tensor: A tensor containing the data for the specified index.
+            tuple[torch.Tensor, str]: A tuple containing the data for the specified index and its label.
 
         Raises:
             IndexError: If the index is out of range.
@@ -98,7 +109,7 @@ def split_data(
     train_dist: float = 0.8,
     batch_size: int = 128,
     logger: Optional[Logger] = None,
-) -> Tuple[DataLoader, DataLoader]:
+) -> tuple[DataLoader, DataLoader]:
     """
     Splits data into training and test datasets.
 
@@ -116,7 +127,7 @@ def split_data(
             split details. If provided, information about the split will be logged.
 
     Returns:
-        Tuple[DataLoader, DataLoader]: A tuple containing the DataLoader for the training set
+        tuple[DataLoader, DataLoader]: A tuple containing the DataLoader for the training set
         and the DataLoader for the test set.
     """
     # Calculate the number of entries (from percentage), used as training data
@@ -160,7 +171,7 @@ def split_data_kfcv(
     train_dist: float = 0.8,
     batch_size: int = 128,
     logger: Optional[Logger] = None,
-) -> Tuple[AnnData, DataLoader]:
+) -> tuple[AnnData, DataLoader]:
     """
     Splits an AnnData object into training and test datasets using a specified layer.
 
@@ -180,7 +191,7 @@ def split_data_kfcv(
             details. If provided, information about the split will be logged.
 
     Returns:
-        Tuple[AnnData, DataLoader]: A tuple containing the training AnnData object and the
+        tuple[AnnData, DataLoader]: A tuple containing the training AnnData object and the
         DataLoader for the test set.
     """
     # Calculate the number of entries (from percentage), used as training data
@@ -222,7 +233,7 @@ def create_fold(
     data_layer: str,
     batch_size: int = 128,
     logger: Optional[Logger] = None,
-) -> Tuple[DataLoader, DataLoader]:
+) -> tuple[DataLoader, DataLoader]:
     """
     Creates training and validation folds based on a donor column.
 
@@ -237,7 +248,7 @@ def create_fold(
         logger (Optional[Logger], optional): Logger instance for logging information. Defaults to None.
 
     Returns:
-        Tuple[DataLoader, DataLoader]: A tuple containing the training and validation DataLoaders.
+        tuple[DataLoader, DataLoader]: A tuple containing the training and validation DataLoaders.
     """
     # Select the data for training and validation based on the donor column
     train_split = adata[adata.obs["donor"] != donor].layers[data_layer]
@@ -266,15 +277,71 @@ def create_fold(
     return train_loader, val_loader
 
 
-def plot_reconstruction(plotting_data):
-    """Docstring."""
+def plot_recon_performance(
+    plotting_data: list[tuple[torch.Tensor, torch.Tensor, str]],
+    scope: Literal["Sample", "Gene"] = "Sample",
+    method: Literal["Sum", "Mean"] = "Sum",
+) -> plt.Figure:
+    """
+    Generates a scatter plot comparing original and reconstructed data based on the specified scope and method.
+
+    Args:
+        plotting_data (list[tuple[torch.Tensor, torch.Tensor, str]]): List of tuples where each tuple contains the original data tensor, the reconstructed data tensor, and the label.
+        scope (Literal["Sample", "Gene"], optional): Scope of the plot, either "Sample" or "Gene".Defaults to "Sample".
+        method (Literal["Sum", "Mean"], optional): Method of summarization, either "Sum" or "Mean". Defaults to "Sum".
+
+    Returns:
+        plt.Figure: The matplotlib figure object containing the scatter plot.
+    """
+    # Unpack plotting data and convert tensors to numpy arrays
     xs, x_hats, labels = zip(*plotting_data)
+    xs = np.stack([x.detach().numpy() for x in xs])
+    x_hats = np.stack([x_hat.detach().numpy() for x_hat in x_hats])
 
-    pass
+    # Create a DataFrame for storing the results
+    recon_df = pd.DataFrame()
+
+    # Check if the scope and method are valid and apply the selected operation
+    if scope in _DIM_RED and method in _DIM_RED[scope]:
+        summarise = _DIM_RED[scope][method]
+        recon_df["X"] = summarise(xs)
+        recon_df["X_Hat"] = summarise(x_hats)
+
+        if scope == "Sample":
+            recon_df["Cell_Type"] = labels
+
+    # Set Seaborn theme and palette
+    sns.set_theme()
+    sns.set_palette("Paired")
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    # Plot based on scope
+    if scope == "Sample":
+        sns.scatterplot(x="X", y="X_Hat", data=recon_df, hue="Cell_Type", ax=ax)
+        # Move legend out of plot
+        sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1))
+    else:  # scope == "Gene"
+        sns.scatterplot(x="X", y="X_Hat", data=recon_df, ax=ax)
+
+    ax.set_xlabel("Sample")
+    ax.set_ylabel("Reconstructed")
+    ax.set_title(f"Reconstruction Performance - {scope} {method}")
+
+    return fig
 
 
-def plot_latent_space(plotting_data):
-    """Docstring."""
+def plot_latent_space(plotting_data: list[tuple[torch.Tensor, str]]) -> plt.Figure:
+    """
+    Generates a scatter plot of the PCA-transformed latent space.
+
+    Args:
+        plotting_data (list[tuple[torch.Tensor, str]]): List of tuples where each tuple contains
+            the latent space tensor and the label.
+
+    Returns:
+        plt.Figure: The matplotlib figure object containing the scatter plot of the latent space.
+    """
     zs, labels = zip(*plotting_data)
     # Transormation of zs to be processed by PCA
     zs = np.stack([z.detach().numpy() for z in zs])
@@ -286,15 +353,15 @@ def plot_latent_space(plotting_data):
 
     # Data frame for plotting
     pca_df = pd.DataFrame(data=pca_features, columns=["PC1", "PC2"])
-    pca_df["Cell Type"] = labels
+    pca_df["Cell_Type"] = labels
 
     sns.set_theme()
     sns.set_palette("Paired")  # Color palette
 
     fig, ax = plt.subplots(figsize=(10, 8))
 
-    sns.scatterplot(x="PC1", y="PC2", data=pca_df, hue="Cell Type", ax=ax)
-    # Moves legend out of plot
+    sns.scatterplot(x="PC1", y="PC2", data=pca_df, hue="Cell_Type", ax=ax)
+    # Move legend out of plot
     sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1))
 
     ax.set_xlabel(f"PC1 - {variance[0]:.1f}% Variance")
