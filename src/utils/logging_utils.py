@@ -44,7 +44,10 @@ def setup_logger(
     Returns:
         logging.Logger: The configured logger instance.
     """
-    logger = log.getLogger(f"{level.lower()}_logger")
+    logger = log.getLogger(f"custom_{level.lower()}_logger")
+    logger.propagate = False  # Prevent propagation to parent loggers
+    logger.handlers = []  # Remove any existing handlers - Jupyter Notebooks
+
     # Evaluate logging level
     level = getattr(log, level)
     logger.setLevel(level)
