@@ -1,52 +1,92 @@
-"""Docstring."""
+"""
+Module for training and evaluating an autoencoder model with outer cross-validation.
+
+This module provides functionality to fit an autoencoder model to single-cell data using 
+outer cross-validation. It includes functions for training, validating, and testing the model, 
+with support for TensorBoard logging and optional progress logging.
+
+Functions:
+- fit: Sets up the training process, including the optimizer and TensorBoard writer, and 
+  calls the training function for each fold.
+- train_fold: Trains the model on specified folds, including data splitting, epoch-wise 
+  training, validation, and testing.
+- train_epoch: Performs a single training epoch, updating model parameters and logging 
+  metrics.
+- val_epoch: Validates the model for one epoch, computing and logging the validation loss.
+- test_fold: Tests the model on a specific fold, computing and logging the test loss, and 
+  generating performance plots.
+"""
 
 # Standard imports
 from datetime import datetime
+from logging import Logger
+from typing import Optional
 
 # Third-party imports
+from anndata import AnnData
 import torch
+import torch.optim as optim
+from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 # Self-built modules
-from utils.data_utils import create_fold, plot_expression_profiles
-import utils.json_utils as jutils
+from autoencoder.ae_model import Autoencoder
+import utils.data_utils as dutils
+from utils.json_utils import OptimizerConfig
 
 __author__ = "Christian Kolland"
-__version__ = 0.1
+__version__ = 1.0
 
 
 def fit(
-    version,
-    model,
-    train_data,
-    data_layer,
-    test_loader,
-    optimizer,
-    batch_size=128,
-    num_epochs=50,
-    device="cpu",
-    logger=None,
-):
-    """Docstring."""
-    optimizer = jutils.configure_optimizer(
-        model.parameters(),
-        optimizer.optimizer,
-        learning_rate=optimizer.learning_rate,
-        weight_decay=optimizer.weight_decay,
+    model: Autoencoder,
+    model_name: str,
+    adata: AnnData,
+    data_layer: str,
+    optim: OptimizerConfig,
+    batch_size: int = 128,
+    num_epochs: int = 50,
+    device: str = "cpu",
+    logger: Optional[Logger] = None,
+) -> None:
+    """
+    Fits the autoencoder model to the provided data.
+
+    This function sets up the training process, including the optimizer and
+    TensorBoard writer, and then calls the training function for each fold.
+
+    Args:
+        model: The autoencoder model to be trained.
+        model_name: A string identifier for the model.
+        adata: An AnnData object containing the single-cell data.
+        data_layer: The key in adata.layers where the input data is stored.
+        optim: An OptimizerConfig object specifying the optimizer settings.
+        batch_size: The batch size for training. Defaults to 128.
+        num_epochs: The number of epochs to train for. Defaults to 50.
+        device: The device to run the training on ("cpu" or "cuda"). Defaults to "cpu".
+        logger: An optional Logger object for logging output.
+
+    Returns:
+        None
+    """
+    # Assemble optimizer
+    learning_rate = optim.learning_rate
+    weight_decay = optim.weight_decay
+    optimizer = optim.optimizer(
+        model.parameters(), lr=learning_rate, weight_decay=weight_decay
     )
 
     writer = SummaryWriter(
-        f'runs/hca/ae_{version}_{datetime.now().strftime("%Y%m%d-%H%M%S")}'
+        f'runs/hca/ae_{model_name}_{datetime.now().strftime("%Y%m%d-%H%M%S")}'
     )
 
     donors = ["D1", "H2", "D5"]
     train_fold(
         model,
         donors,
-        train_data,
+        adata,
         data_layer,
-        test_loader,
         optimizer,
         batch_size,
         num_epochs,
@@ -59,25 +99,50 @@ def fit(
 
 
 def train_fold(
-    model,
-    folds,
-    train_data,
-    data_layer,
-    test_loader,
-    optimizer,
-    batch_size=128,
-    num_epochs=50,
-    device="cpu",
-    writer=None,
-    logger=None,
-):
-    """Docstring."""
+    model: Autoencoder,
+    folds: list[str],
+    adata: AnnData,
+    data_layer: str,
+    optimizer: optim.Optimizer,
+    batch_size: int = 128,
+    num_epochs: int = 50,
+    device: str = "cpu",
+    writer: Optional[SummaryWriter] = None,
+    logger: Optional[Logger] = None,
+) -> None:
+    """
+    Trains the model on the specified folds of data.
+
+    This function performs the actual training process, including data splitting,
+    epoch-wise training, validation, and testing.
+
+    Args:
+        model: The autoencoder model to be trained.
+        folds: A list of fold identifiers (e.g., donor IDs).
+        adata: An AnnData object containing the single-cell data.
+        data_layer: The key in adata.layers where the input data is stored.
+        optimizer: The optimizer to use for training.
+        batch_size: The batch size for training. Defaults to 128.
+        num_epochs: The number of epochs to train for. Defaults to 50.
+        device: The device to run the training on ("cpu" or "cuda"). Defaults to "cpu".
+        writer: An optional SummaryWriter object for TensorBoard logging.
+        logger: An optional Logger object for logging output.
+
+    Returns:
+        None
+    """
     for fold_idx, fold in enumerate(folds):
         if logger is not None:
             logger.info(f">>> FOLD {fold_idx + 1}/{len(folds)} - {fold}")
 
-        train_loader, val_loader = create_fold(
-            train_data, fold, data_layer, batch_size, logger
+        # Create outer fold -> Testing
+        train_data, test_loader = dutils.create_outer_fold(
+            adata, fold, data_layer, batch_size, logger
+        )
+
+        # Split training data -> Training/validation
+        train_loader, val_loader = dutils.split_data(
+            train_data, data_layer, batch_size=batch_size, logger=logger
         )
 
         prev_upd = 0
@@ -90,23 +155,40 @@ def train_fold(
             )
             val_epoch(fold, prev_upd, model, val_loader, device, writer, logger)
 
+        # Test on fold
+        # If model performs good on completly unseen data it generalizes good
+        # Guarantees that no donor specific batch effects are learned
         test_fold(fold, model, test_loader, device, writer, logger)
 
 
 def train_epoch(
-    fold,
-    prev_upd,
-    model,
-    train_loader,
-    optimizer,
-    device="cpu",
-    writer=None,
-    logger=None,
-):
-    """Docstring."""
+    fold: str,
+    prev_upd: int,
+    model: Autoencoder,
+    train_loader: DataLoader,
+    optimizer: optim.Optimizer,
+    device: str = "cpu",
+    writer: Optional[SummaryWriter] = None,
+    logger: Optional[Logger] = None,
+) -> int:
+    """Trains the model for one epoch.
+
+    Args:
+        fold: The current fold identifier.
+        prev_upd: The number of updates from previous epochs.
+        model: The autoencoder model being trained.
+        train_loader: DataLoader for the training data.
+        optimizer: The optimizer being used for training.
+        device: The device to run the training on ("cpu" or "cuda"). Defaults to "cpu".
+        writer: An optional SummaryWriter object for TensorBoard logging.
+        logger: An optional Logger object for logging output.
+
+    Returns:
+        int: The total number of updates after this epoch.
+    """
     model.train()
 
-    for batch_idx, batch in enumerate(tqdm(train_loader)):
+    for batch_idx, (batch, _) in enumerate(tqdm(train_loader)):
         num_upd = prev_upd + batch_idx
 
         batch = batch.to(device)
@@ -145,20 +227,40 @@ def train_epoch(
 
 
 def val_epoch(
-    fold, prev_upd, model, val_loader, device="cpu", writer=None, logger=None
-):
-    "Docstring."
+    fold: str,
+    prev_upd: int,
+    model: Autoencoder,
+    val_loader: DataLoader,
+    device: str = "cpu",
+    writer: Optional[SummaryWriter] = None,
+    logger: Optional[Logger] = None,
+) -> None:
+    """Validates the model for one epoch.
+
+    Args:
+        fold: The current fold identifier.
+        prev_upd: The number of updates from previous epochs.
+        model: The autoencoder model being validated.
+        val_loader: DataLoader for the validation data.
+        device: The device to run the validation on ("cpu" or "cuda"). Defaults to "cpu".
+        writer: An optional SummaryWriter object for TensorBoard logging.
+        logger: An optional Logger object for logging output.
+
+    Returns:
+        None
+    """
     model.eval()
 
     val_loss = 0.0
     with torch.no_grad():
-        for data in tqdm(val_loader, desc="Validation"):
+        for data, _ in tqdm(val_loader, desc="Validation"):
             data = data.to(device)
 
             outputs = model(data)
             loss = outputs.loss
             val_loss += loss.item()
 
+    # Avg validation loss
     val_loss /= len(val_loader)
 
     if writer is not None:
@@ -168,13 +270,34 @@ def val_epoch(
         logger.info(f">>> VALIDATION Loss: {val_loss:.4f}")
 
 
-def test_fold(fold, model, test_loader, device="cpu", writer=None, logger=None):
-    """Docstring."""
+def test_fold(
+    fold: str,
+    model: Autoencoder,
+    test_loader: DataLoader,
+    device: str = "cpu",
+    writer: Optional[SummaryWriter] = None,
+    logger: Optional[Logger] = None,
+) -> None:
+    """
+    Tests the model on a specific fold.
+
+    Args:
+        fold: The current fold identifier.
+        model: The autoencoder model being tested.
+        test_loader: DataLoader for the test data.
+        device: The device to run the testing on ("cpu" or "cuda"). Defaults to "cpu".
+        writer: An optional SummaryWriter object for TensorBoard logging.
+        logger: An optional Logger object for logging output.
+
+    Returns:
+        None
+    """
     model.eval()
 
+    recons, latent_reps = []
     test_loss = 0.0
     with torch.no_grad():
-        for batch_idx, batch in enumerate(tqdm(test_loader, desc="Testing")):
+        for batch, labels in tqdm(test_loader, desc="Testing"):
             batch = batch.to(device)
 
             outputs = model(batch)
@@ -182,18 +305,17 @@ def test_fold(fold, model, test_loader, device="cpu", writer=None, logger=None):
 
             test_loss += loss.item()
 
-            if batch_idx % 5 == 0:
-                if writer is not None:
-                    writer.add_figure(
-                        f"{fold}/Test/Recon",
-                        plot_expression_profiles(batch[0], outputs.x_recon[0]),
-                    )
+            # Data for performance plotting
+            recons.extend(list(zip(batch, outputs.x_recon, labels)))
+            latent_reps.extend(list(zip(outputs.z_sample, labels)))
 
-                    # TODO: Latent Space visualization
-
+    # Avg test loss
     test_loss /= len(test_loader)
 
     if writer is not None:
         writer.add_scalar(f"{fold}/Test/Loss", test_loss)
+        writer.add_figure(f"{fold}/Test/Recon", dutils.plot_recon_performance(recons))
+        writer.add_figure(f"{fold}/Test/Latent", dutils.plot_latent_space(latent_reps))
 
-    logger.info(f">>> TEST Loss: {test_loss:.4f}")
+    if logger is not None:
+        logger.info(f">>> TEST Loss: {test_loss:.4f}")
