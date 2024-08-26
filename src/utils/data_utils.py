@@ -21,7 +21,9 @@ from anndata import AnnData
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from scipy.sparse import csr_matrix
+import seaborn as sns
 from sklearn.decomposition import PCA
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -274,35 +276,29 @@ def plot_reconstruction(plotting_data):
 def plot_latent_space(plotting_data):
     """Docstring."""
     zs, labels = zip(*plotting_data)
+    # Transormation of zs to be processed by PCA
     zs = np.stack([z.detach().numpy() for z in zs])
 
     pca = PCA(n_components=2)
-    latent_pca = pca.fit_transform(zs)
+    pca_features = pca.fit_transform(zs)
+    # Save variance explanation for each PC
+    variance = pca.explained_variance_ratio_ * 100
 
-    # Label to color dict (automatic)
-    label_color_dict = {label: idx for idx, label in enumerate(np.unique(labels))}
-    # Color vector creation
-    cvec = [label_color_dict[label] for label in labels]
+    # Data frame for plotting
+    pca_df = pd.DataFrame(data=pca_features, columns=["PC1", "PC2"])
+    pca_df["Cell Type"] = labels
 
-    # Create a scatter plot of the PCA results
+    sns.set_theme()
+    sns.set_palette("Paired")  # Color palette
+
     fig, ax = plt.subplots(figsize=(10, 8))
 
-    # Plot each class with different colors
-    scatter = ax.scatter(latent_pca[:, 0], latent_pca[:, 1], c=cvec)
+    sns.scatterplot(x="PC1", y="PC2", data=pca_df, hue="Cell Type", ax=ax)
+    # Moves legend out of plot
+    sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1))
 
-    # Add labels and title
-    ax.set_xlabel("PCA 1")
-    ax.set_ylabel("PCA 2")
-    ax.set_title("PCA of Autoencoder Latent Space")
-
-    handles = [
-        mpatches.Patch(color=scatter.cmap(scatter.norm(value)), label=label)
-        for label, value in label_color_dict.items()
-    ]
-
-    ax.legend(
-        handles=handles, bbox_to_anchor=(1.05, 1), loc="upper left", borderaxespad=0.0
-    )
-    ax.grid(True)
+    ax.set_xlabel(f"PC1 - {variance[0]:.1f}% Variance")
+    ax.set_ylabel(f"PC2 - {variance[1]:.1f}% Variance")
+    ax.set_title("PCA of AE Latent Space")
 
     return fig
