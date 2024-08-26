@@ -59,7 +59,7 @@ def standard_transform() -> None:
     args = parser.parse_args()
 
     # Initialize logger
-    logger = setup_logger(args.log, args.name)
+    logger = setup_logger("INFO", log_dir=args.log, log_file=args.name)
 
     # >>> Functionality starts here
     adata = io_utils.load_adata(args.data, logger)
