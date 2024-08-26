@@ -9,25 +9,25 @@ Functions:
     - split_data: Splits a dense tensor into training and test datasets.
     - split_data_kfcv: Splits an AnnData object into training and test datasets using a specified layer.
     - create_fold: Creates training and validation folds based on a donor column.
-
-Classes:
-    - SparseDataset: A custom PyTorch Dataset class for sparse data.
 """
 
 # Standard imports
-from io import BytesIO
+from dataclasses import dataclass
 from logging import Logger
 from typing import Optional, Tuple
 
 # Third-party imports
 from anndata import AnnData
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy.sparse import csr_matrix
+from sklearn.decomposition import PCA
 import torch
 from torch.utils.data import Dataset, DataLoader
 
 __author__ = "Christian Kolland"
-__version__ = "0.1"
+__version__ = "1.0"
 
 
 class SparseDataset(Dataset):
@@ -45,14 +45,16 @@ class SparseDataset(Dataset):
         sparse_data (csr_matrix): A sparse matrix in Compressed Sparse Row (CSR) format.
     """
 
-    def __init__(self, sparse_data: csr_matrix):
+    def __init__(self, sparse_data: csr_matrix, anno_cell_type: list):
         """
         Initializes the SparseDataset with sparse data.
 
         Args:
             sparse_data (csr_matrix): The sparse matrix data to be used by the dataset.
+            cell_type_anno (list): Annotation labels corresponding to the data rows.
         """
         self.sparse_data = sparse_data
+        self.anno_cell_type = anno_cell_type
 
     def __len__(self) -> int:
         """
@@ -63,7 +65,7 @@ class SparseDataset(Dataset):
         """
         return self.sparse_data.shape[0]
 
-    def __getitem__(self, index: int) -> torch.tensor:
+    def __getitem__(self, index: int) -> torch.Tensor:
         """
         Retrieves a sample from the dataset.
 
@@ -82,8 +84,11 @@ class SparseDataset(Dataset):
         # Extract the row as a dense numpy array
         row = self.sparse_data.getrow(index).toarray().squeeze()
 
+        # Retrieve the corresponding annotation label
+        label = self.anno_cell_type[index]
+
         # Convert the row to a PyTorch tensor
-        return torch.tensor(row, dtype=torch.float32)
+        return torch.tensor(row, dtype=torch.float32), label
 
 
 def split_data(
@@ -191,7 +196,10 @@ def split_data_kfcv(
     # Keep adata object for k-fold manipulation
     # Only convert test data to sparse dataset
     train_data = adata[train_split.tolist(), :]
-    test_data = SparseDataset(adata.layers[layer_name][test_split, :])
+    test_data = SparseDataset(
+        adata.layers[layer_name][test_split, :],
+        adata.obs["cell_type"].iloc[test_split.tolist()].tolist(),
+    )
 
     if logger is not None:
         logger.info(f"Training split created. Contains {len(train_split)} entries")
@@ -256,37 +264,45 @@ def create_fold(
     return train_loader, val_loader
 
 
-def plot_expression_profiles(original, reconstructed):
+def plot_reconstruction(plotting_data):
     """Docstring."""
-    original_dense = original.reshape(-1).tolist()
-    reconstructed_dense = reconstructed.reshape(-1).tolist()
-    x_ticks = [i for i in range(len(original))]
+    xs, x_hats, labels = zip(*plotting_data)
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    pass
 
-    ax.plot(
-        x_ticks,
-        original_dense,
-        marker="o",
-        linestyle="-",
-        color="y",
-        label="Original",
+
+def plot_latent_space(plotting_data):
+    """Docstring."""
+    zs, labels = zip(*plotting_data)
+    zs = np.stack([z.detach().numpy() for z in zs])
+
+    pca = PCA(n_components=2)
+    latent_pca = pca.fit_transform(zs)
+
+    # Label to color dict (automatic)
+    label_color_dict = {label: idx for idx, label in enumerate(np.unique(labels))}
+    # Color vector creation
+    cvec = [label_color_dict[label] for label in labels]
+
+    # Create a scatter plot of the PCA results
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    # Plot each class with different colors
+    scatter = ax.scatter(latent_pca[:, 0], latent_pca[:, 1], c=cvec)
+
+    # Add labels and title
+    ax.set_xlabel("PCA 1")
+    ax.set_ylabel("PCA 2")
+    ax.set_title("PCA of Autoencoder Latent Space")
+
+    handles = [
+        mpatches.Patch(color=scatter.cmap(scatter.norm(value)), label=label)
+        for label, value in label_color_dict.items()
+    ]
+
+    ax.legend(
+        handles=handles, bbox_to_anchor=(1.05, 1), loc="upper left", borderaxespad=0.0
     )
-    ax.plot(
-        x_ticks,
-        reconstructed_dense,
-        marker="x",
-        linestyle="--",
-        color="b",
-        label="Recon",
-    )
-
-    # Adding titles and labels
-    ax.set_title("Expression Profile Comparison")
-    ax.set_xlabel("Gene Index")
-    ax.set_ylabel("Expression Level")
-
-    # Add Legend
-    ax.legend()
+    ax.grid(True)
 
     return fig
