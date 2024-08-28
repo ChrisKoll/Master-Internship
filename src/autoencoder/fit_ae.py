@@ -11,7 +11,6 @@ import torch
 # Self-built modules
 import src.autoencoder.ae_model as ae
 import src.autoencoder.ae_training as T
-import src.utils.data_utils as dutils
 import src.utils.io_utils as ioutils
 from src.utils.logging_utils import setup_logger
 import src.utils.json_utils as jutils
@@ -40,7 +39,7 @@ def main() -> None:
     parser.add_argument("-d", "--data", type=str, help=_ARG_DATA_HELP)
     parser.add_argument("-l", "--layer", type=str, help=_ARG_LAYER_HELP)
     parser.add_argument("-c", "--conf", type=str, help=_ARG_CONF_HELP)
-    parser.add_argument("-d", "--log", type=str, default="logs/", help=_ARG_LOG_HELP)
+    parser.add_argument("-x", "--log", type=str, default="logs/", help=_ARG_LOG_HELP)
     parser.add_argument("-f", "--name", type=str, default=None, help=_ARG_NAME_HELP)
 
     # Parse arguments -> Can be called with args.FLAG
@@ -54,21 +53,24 @@ def main() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     adata = ioutils.load_adata(args.data, logger)
-    config_json = jutils.load_config_file(args.conf, logger)
+    config_json = jutils.import_config_json(args.conf)
     config = jutils.Config(**config_json)
+
+    logger.debug(config)
+    logger.info("Config loaded")
 
     encoder_layers = jutils.assemble_layers(config.model.layers.encoder)
     decoder_layers = jutils.assemble_layers(config.model.layers.decoder)
     # Assemble model
-    model = ae.Autoencoder(encoder_layers, decoder_layers, config.model.loss_function)
+    model = ae.Autoencoder(encoder_layers, decoder_layers, config.model.loss_function())
     model.to(device)
 
     logger.debug(model)
-    logger.info("Model successfully assembled")
+    logger.info("Model assembled")
 
     T.fit(
-        config.model.name,
         model,
+        config.model.name,
         adata,
         args.layer,
         config.model.optimization,

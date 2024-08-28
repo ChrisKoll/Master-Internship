@@ -7,22 +7,29 @@
                 {
                     "role": "input",
                     "type": "linear",
-                    "in_dimension": 1000,
-                    "out_dimension": 600,
+                    "in_dimension": 5000,
+                    "out_dimension": 2500,
                     "activation": "silu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
-                    "in_dimension": 600,
-                    "out_dimension": 300,
+                    "in_dimension": 2500,
+                    "out_dimension": 1250,
+                    "activation": "silu"
+                },
+                {
+                    "role": "hidden",
+                    "type": "linear",
+                    "in_dimension": 1250,
+                    "out_dimension": 625,
                     "activation": "silu"
                 },
                 {
                     "role": "latent_space",
                     "type": "linear",
-                    "in_dimension": 300,
-                    "out_dimension": 50,
+                    "in_dimension": 625,
+                    "out_dimension": 100,
                     "activation": ""
                 }
             ],
@@ -30,22 +37,29 @@
                 {
                     "role": "input",
                     "type": "linear",
-                    "in_dimension": 50,
-                    "out_dimension": 300,
+                    "in_dimension": 100,
+                    "out_dimension": 625,
                     "activation": "silu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
-                    "in_dimension": 300,
-                    "out_dimension": 600,
+                    "in_dimension": 625,
+                    "out_dimension": 1250,
+                    "activation": "silu"
+                },
+                {
+                    "role": "hidden",
+                    "type": "linear",
+                    "in_dimension": 1250,
+                    "out_dimension": 2500,
                     "activation": "silu"
                 },
                 {
                     "role": "output",
                     "type": "linear",
-                    "in_dimension": 600,
-                    "out_dimension": 1000,
+                    "in_dimension": 2500,
+                    "out_dimension": 5000,
                     "activation": ""
                 }
             ]
@@ -58,7 +72,7 @@
         }
     },
     "training": {
-        "batch_size": 128,
-        "training_epochs": 5
+        "batch_size": 256,
+        "training_epochs": 25
     }
 }

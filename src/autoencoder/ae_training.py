@@ -31,9 +31,9 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 # Self-built modules
-from autoencoder.ae_model import Autoencoder
-import utils.data_utils as dutils
-from utils.json_utils import OptimizerConfig
+from src.autoencoder.ae_model import Autoencoder
+import src.utils.data_utils as dutils
+from src.utils.json_utils import OptimizerConfig
 
 __author__ = "Christian Kolland"
 __version__ = 1.0
