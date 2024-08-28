@@ -143,7 +143,7 @@ def split_data(
     train_split, val_split = perm[:train_size], perm[train_size:]
 
     if logger is not None:
-        logger.info("Distributed entries into training/validation splits")
+        logger.debug("Distributed entries into training/validation splits")
 
     # Create sparse datasets from the split data
     train_data = SparseDataset(
@@ -242,19 +242,18 @@ def create_outer_fold(
     Returns:
         tuple[DataLoader, DataLoader]: A tuple containing two DataLoaders. The first DataLoader is for the training set, and the second is for the validation set (test fold).
     """
-    # Select the data for training and testing based on the donor column
-    train_split = adata[adata.obs["donor"] != donor].layers[data_layer]
-    test_split = adata[adata.obs["donor"] == donor].layers[data_layer]
-
     # Remains adata for further splitting
-    train_data = adata[train_split.tolist(), :]
+    # Cell type information is needed
+    train_data = adata[adata.obs["donor"] != donor]
+
+    test_split = adata[adata.obs["donor"] == donor]
     test_data = SparseDataset(
-        adata.layers[data_layer][test_split, :],
-        adata.obs["cell_type"].iloc[test_split.tolist()].tolist(),
+        test_split.layers[data_layer],
+        test_split.obs["cell_type"],
     )
 
     if logger is not None:
-        logger.info(f"Training fold created. Contains {train_split.shape[0]} entries")
+        logger.info(f"Training fold created. Contains {train_data.shape[0]} entries")
         logger.info(f"Test fold created. Contains {test_split.shape[0]} entries")
 
     test_loader = DataLoader(
@@ -270,17 +269,15 @@ def plot_recon_performance(
     plotting_data: list[tuple[torch.Tensor, torch.Tensor, str]],
     scope: Literal["Sample", "Gene"] = "Sample",
     method: Literal["Sum", "Mean"] = "Sum",
-) -> plt.Figure:
+    fold: str = "",
+):
     """
-    Generates a scatter plot comparing original and reconstructed data based on the specified scope and method.
+    Generates a scatter plot comparing original and reconstructed data based on the specified scope and method and saves it to file.
 
     Args:
         plotting_data (list[tuple[torch.Tensor, torch.Tensor, str]]): List of tuples where each tuple contains the original data tensor, the reconstructed data tensor, and the label.
         scope (Literal["Sample", "Gene"], optional): Scope of the plot, either "Sample" or "Gene".Defaults to "Sample".
         method (Literal["Sum", "Mean"], optional): Method of summarization, either "Sum" or "Mean". Defaults to "Sum".
-
-    Returns:
-        plt.Figure: The matplotlib figure object containing the scatter plot.
     """
     # Unpack plotting data and convert tensors to numpy arrays
     xs, x_hats, labels = zip(*plotting_data)
@@ -317,19 +314,16 @@ def plot_recon_performance(
     ax.set_ylabel("Reconstructed")
     ax.set_title(f"Reconstruction Performance - {scope} {method}")
 
-    return fig
+    fig.savefig(f"plots/{fold}_performance_{scope.lower()}_{method.lower()}.png")
 
 
-def plot_latent_space(plotting_data: list[tuple[torch.Tensor, str]]) -> plt.Figure:
+def plot_latent_space(plotting_data: list[tuple[torch.Tensor, str]], fold: str = ""):
     """
-    Generates a scatter plot of the PCA-transformed latent space.
+    Generates a scatter plot of the PCA-transformed latent space and saves it to file.
 
     Args:
         plotting_data (list[tuple[torch.Tensor, str]]): List of tuples where each tuple contains
             the latent space tensor and the label.
-
-    Returns:
-        plt.Figure: The matplotlib figure object containing the scatter plot of the latent space.
     """
     zs, labels = zip(*plotting_data)
     # Transormation of zs to be processed by PCA
@@ -357,4 +351,4 @@ def plot_latent_space(plotting_data: list[tuple[torch.Tensor, str]]) -> plt.Figu
     ax.set_ylabel(f"PC2 - {variance[1]:.1f}% Variance")
     ax.set_title("PCA of AE Latent Space")
 
-    return fig
+    fig.savefig(f"plots/{fold}_latent_space.png")
