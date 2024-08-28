@@ -78,10 +78,12 @@ def fit(
     )
 
     writer = SummaryWriter(
-        f'runs/hca/ae_{model_name}_{datetime.now().strftime("%Y%m%d-%H%M%S")}'
+        f'runs/hca/{model_name}_{datetime.now().strftime("%d%m%Y-%H%M")}'
     )
 
+    # List of folds
     donors = ["D1", "H2", "D5"]
+
     train_fold(
         model,
         donors,
@@ -136,11 +138,13 @@ def train_fold(
             logger.info(f">>> FOLD {fold_idx + 1}/{len(folds)} - {fold}")
 
         # Create outer fold -> Testing
+        # Test data from this donor will not be seen during training
         train_data, test_loader = dutils.create_outer_fold(
             adata, fold, data_layer, batch_size, logger
         )
 
         # Split training data -> Training/validation
+        # Standard split for training and validation
         train_loader, val_loader = dutils.split_data(
             train_data, data_layer, batch_size=batch_size, logger=logger
         )
@@ -294,7 +298,7 @@ def test_fold(
     """
     model.eval()
 
-    recons, latent_reps = []
+    recons, latent_reps = [], []
     test_loss = 0.0
     with torch.no_grad():
         for batch, labels in tqdm(test_loader, desc="Testing"):
@@ -314,8 +318,11 @@ def test_fold(
 
     if writer is not None:
         writer.add_scalar(f"{fold}/Test/Loss", test_loss)
-        writer.add_figure(f"{fold}/Test/Recon", dutils.plot_recon_performance(recons))
-        writer.add_figure(f"{fold}/Test/Latent", dutils.plot_latent_space(latent_reps))
+        dutils.plot_recon_performance(recons, scope="Sample", method="Sum")
+        dutils.plot_recon_performance(recons, scope="Sample", method="Mean")
+        dutils.plot_recon_performance(recons, scope="Gene", method="Sum")
+        dutils.plot_recon_performance(recons, scope="Gene", method="Mean")
+        dutils.plot_latent_space(latent_reps)
 
     if logger is not None:
         logger.info(f">>> TEST Loss: {test_loss:.4f}")
