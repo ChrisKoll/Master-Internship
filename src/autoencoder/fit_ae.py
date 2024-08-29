@@ -2,8 +2,6 @@
 
 # Standard imports
 import argparse
-from datetime import datetime
-import os
 
 # Third-party imports
 import torch
