@@ -17,10 +17,12 @@ Functions:
 
 # Standard imports
 from logging import Logger
+import os
 from typing import Literal, Optional
 
 # Third-party imports
 from anndata import AnnData
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -38,6 +40,9 @@ _DIM_RED = {
     "Sample": {"Sum": lambda x: x.sum(axis=1), "Mean": lambda x: x.mean(axis=1)},
     "Gene": {"Sum": lambda x: x.sum(axis=0), "Mean": lambda x: x.mean(axis=0)},
 }
+
+# Non GUI-backend
+matplotlib.use("Agg")
 
 
 class SparseDataset(Dataset):
@@ -138,7 +143,7 @@ def split_data(
     train_size = int(train_dist * adata.shape[0])
 
     # Set seed to make data distribution reproducable
-    torch.manual_seed(19082024)
+    # torch.manual_seed(19082024)
     perm = torch.randperm(adata.shape[0])
     train_split, val_split = perm[:train_size], perm[train_size:]
 
@@ -224,7 +229,7 @@ def create_outer_fold(
     data_layer: str,
     batch_size: int = 128,
     logger: Optional[Logger] = None,
-) -> tuple[DataLoader, DataLoader]:
+) -> tuple[AnnData, DataLoader]:
     """
     Creates training and validation folds based on a specified donor.
 
@@ -240,7 +245,7 @@ def create_outer_fold(
         logger: An optional Logger instance for logging details about the data split. If provided, it logs information about the number of entries in each fold.
 
     Returns:
-        tuple[DataLoader, DataLoader]: A tuple containing two DataLoaders. The first DataLoader is for the training set, and the second is for the validation set (test fold).
+        tuple[AnnData, DataLoader]: A tuple containing two DataLoaders. The first DataLoader is for the training set, and the second is for the validation set (test fold).
     """
     # Remains adata for further splitting
     # Cell type information is needed
@@ -249,7 +254,7 @@ def create_outer_fold(
     test_split = adata[adata.obs["donor"] == donor]
     test_data = SparseDataset(
         test_split.layers[data_layer],
-        test_split.obs["cell_type"],
+        test_split.obs["cell_type"].tolist(),
     )
 
     if logger is not None:
@@ -314,6 +319,7 @@ def plot_recon_performance(
     ax.set_ylabel("Reconstructed")
     ax.set_title(f"Reconstruction Performance - {scope} {method}")
 
+    os.makedirs("plots", exist_ok=True)
     fig.savefig(f"plots/{fold}_performance_{scope.lower()}_{method.lower()}.png")
 
 
@@ -351,4 +357,5 @@ def plot_latent_space(plotting_data: list[tuple[torch.Tensor, str]], fold: str =
     ax.set_ylabel(f"PC2 - {variance[1]:.1f}% Variance")
     ax.set_title("PCA of AE Latent Space")
 
+    os.makedirs("plots", exist_ok=True)
     fig.savefig(f"plots/{fold}_latent_space.png")

@@ -15,7 +15,6 @@ __version__ = "1.0"
 
 # Standard imports
 from dataclasses import dataclass
-from typing import List
 
 # Third-party imports
 import torch
@@ -56,8 +55,8 @@ class Autoencoder(nn.Module):
 
     def __init__(
         self,
-        encoder_layers: List[nn.Module],
-        decoder_layers: List[nn.Module],
+        encoder_layers: list[nn.Module],
+        decoder_layers: list[nn.Module],
         loss_function: nn.Module,
     ) -> None:
         super(Autoencoder, self).__init__()

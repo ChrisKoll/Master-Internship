@@ -63,7 +63,6 @@ def main() -> None:
     decoder_layers = jutils.assemble_layers(config.model.layers.decoder)
     # Assemble model
     model = ae.Autoencoder(encoder_layers, decoder_layers, config.model.loss_function())
-    model.to(device)
 
     logger.debug(model)
     logger.info("Model assembled")

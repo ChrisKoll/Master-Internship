@@ -318,10 +318,10 @@ def test_fold(
 
     if writer is not None:
         writer.add_scalar(f"{fold}/Test/Loss", test_loss)
-        dutils.plot_recon_performance(recons, scope="Sample", method="Sum")
-        dutils.plot_recon_performance(recons, scope="Sample", method="Mean")
-        dutils.plot_recon_performance(recons, scope="Gene", method="Sum")
-        dutils.plot_recon_performance(recons, scope="Gene", method="Mean")
+        dutils.plot_recon_performance(recons, scope="Sample", method="Sum", fold=fold)
+        dutils.plot_recon_performance(recons, scope="Sample", method="Mean", fold=fold)
+        dutils.plot_recon_performance(recons, scope="Gene", method="Sum", fold=fold)
+        dutils.plot_recon_performance(recons, scope="Gene", method="Mean", fold=fold)
         dutils.plot_latent_space(latent_reps)
 
     if logger is not None:

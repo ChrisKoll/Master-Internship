@@ -1,0 +1,64 @@
+{
+    "model": {
+        "name": "AE_test",
+        "type": "ae",
+        "layers": {
+            "encoder": [
+                {
+                    "role": "input",
+                    "type": "linear",
+                    "in_dimension": 1000,
+                    "out_dimension": 600,
+                    "activation": "silu"
+                },
+                {
+                    "role": "hidden",
+                    "type": "linear",
+                    "in_dimension": 600,
+                    "out_dimension": 300,
+                    "activation": "silu"
+                },
+                {
+                    "role": "latent_space",
+                    "type": "linear",
+                    "in_dimension": 300,
+                    "out_dimension": 50,
+                    "activation": ""
+                }
+            ],
+            "decoder": [
+                {
+                    "role": "input",
+                    "type": "linear",
+                    "in_dimension": 50,
+                    "out_dimension": 300,
+                    "activation": "silu"
+                },
+                {
+                    "role": "hidden",
+                    "type": "linear",
+                    "in_dimension": 300,
+                    "out_dimension": 600,
+                    "activation": "silu"
+                },
+                {
+                    "role": "output",
+                    "type": "linear",
+                    "in_dimension": 600,
+                    "out_dimension": 1000,
+                    "activation": ""
+                }
+            ]
+        },
+        "loss_function": "mse",
+        "optimization": {
+            "optimizer": "adam",
+            "learning_rate": 1e-2,
+            "weight_decay": 1e-3
+        }
+    },
+    "training": {
+        "batch_size": 128,
+        "training_epochs": 5
+    }
+}
