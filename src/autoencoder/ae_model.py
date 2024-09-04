@@ -114,6 +114,6 @@ class Autoencoder(nn.Module):
             return AEOutput(z_sample=z, x_recon=recon_x, loss=None)
 
         # Compute reconstruction loss
-        loss_recon = self.loss_function(recon_x, x)
+        loss_recon = self.loss_function(recon_x, x).sum(-1).mean
 
         return AEOutput(z_sample=z, x_recon=recon_x, loss=loss_recon)
