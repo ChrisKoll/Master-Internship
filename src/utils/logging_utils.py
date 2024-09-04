@@ -97,3 +97,35 @@ def log_message(
     """
     if logger:
         getattr(logger, level)(message)
+
+
+def log_train_metrics(
+    writer, fold, total_norm, loss, num_upd, recon_loss=None, kl_loss=None
+) -> None:
+    """Docstring."""
+    writer.add_scalar(f"{fold}/Train/GradNorm", total_norm, num_upd)
+    writer.add_scalar(f"{fold}/Train/Loss", loss, num_upd)
+
+    if recon_loss is not None and kl_loss is not None:
+        writer.add_scalar(f"{fold}/Train/Loss/Recon", recon_loss, num_upd)
+        writer.add_scalar(f"{fold}/Train/Loss/KLD", kl_loss, num_upd)
+
+
+def log_val_metrics(writer, fold, loss, num_upd, recon_loss=None, kl_loss=None) -> None:
+    """Docstring."""
+    writer.add_scalar(f"{fold}/Val/Loss", loss, num_upd)
+
+    # For VAE
+    if recon_loss is not None and kl_loss is not None:
+        writer.add_scalar(f"{fold}/Val/Loss/Recon", recon_loss, num_upd)
+        writer.add_scalar(f"{fold}/Val/Loss/KLD", kl_loss, num_upd)
+
+
+def log_test_metrics(writer, fold, loss, recon_loss=None, kl_loss=None) -> None:
+    """Docstring."""
+    writer.add_scalar(f"{fold}/Test/Loss", loss)
+
+    # For VAE
+    if recon_loss is not None and kl_loss is not None:
+        writer.add_scalar(f"{fold}/Test/Loss/Recon", recon_loss)
+        writer.add_scalar(f"{fold}/Test/Loss/KLD", kl_loss)

@@ -34,6 +34,7 @@ from tqdm import tqdm
 from src.autoencoder.ae_model import Autoencoder
 import src.utils.data_utils as dutils
 from src.utils.json_utils import OptimizerConfig
+from src.utils.logging_utils import log_train_metrics, log_val_metrics
 
 __author__ = "Christian Kolland"
 __version__ = 1.0
@@ -44,6 +45,7 @@ def fit(
     model_name: str,
     adata: AnnData,
     data_layer: str,
+    folds: list[str],
     optim: OptimizerConfig,
     batch_size: int = 128,
     num_epochs: int = 50,
@@ -82,11 +84,11 @@ def fit(
     )
 
     # List of folds
-    donors = ["D1", "H2", "D5"]
+    # donors = ["D1", "H2", "D5"]
 
     train_fold(
         model,
-        donors,
+        folds,
         adata,
         data_layer,
         optimizer,
@@ -212,13 +214,28 @@ def train_epoch(
                     total_norm += param_norm.item() ** 2
             total_norm = total_norm**0.5
 
-            logger.info(
-                f"Step {num_upd:,} (N samples: {num_upd * train_loader.batch_size:,}), Loss: {loss.item():.4f}, Grad: {total_norm:.4f}"
-            )
-
             if writer is not None:
-                writer.add_scalar(f"{fold}/Train/GradNorm", total_norm, num_upd)
-                writer.add_scalar(f"{fold}/Train/Loss", loss.item(), num_upd)
+                if not hasattr(outputs, "loss_recon") or not hasattr(
+                    outputs, "loss_kl"
+                ):
+                    # Log AE metrics
+                    log_train_metrics(writer, fold, total_norm, loss.item(), num_upd)
+                else:
+                    # Log VAE metrics
+                    log_train_metrics(
+                        writer,
+                        fold,
+                        total_norm,
+                        loss.item(),
+                        num_upd,
+                        outputs.loss_recon.item(),
+                        outputs.loss_kl.item(),
+                    )
+
+            if logger is not None:
+                logger.info(
+                    f"Step {num_upd:,} (N samples: {num_upd * train_loader.batch_size:,}), Loss: {loss.item():.4f}, Grad: {total_norm:.4f}"
+                )
 
         # Clip gradients
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -255,20 +272,33 @@ def val_epoch(
     """
     model.eval()
 
-    val_loss = 0.0
+    val_loss, val_recon_loss, val_kl_loss = 0.0, 0.0, 0.0
     with torch.no_grad():
         for data, _ in tqdm(val_loader, desc="Validation"):
             data = data.to(device)
 
             outputs = model(data)
-            loss = outputs.loss
-            val_loss += loss.item()
+
+            val_loss += outputs.loss.item()
+            if hasattr(outputs, "loss_recon") and hasattr(outputs, "loss_kl"):
+                val_recon_loss += outputs.loss_recon.item()
+                val_kl_loss += outputs.loss_kl.item()
 
     # Avg validation loss
     val_loss /= len(val_loader)
+    if val_recon_loss != 0.0 and val_kl_loss != 0.0:
+        val_recon_loss /= len(val_loader)
+        val_kl_loss /= len(val_loader)
 
     if writer is not None:
-        writer.add_scalar(f"{fold}/Val/Loss", val_loss, prev_upd)
+        if val_recon_loss == 0.0 and val_kl_loss == 0.0:
+            # Log AE metrics
+            log_val_metrics(writer, fold, val_loss, prev_upd)
+        else:
+            # Log VAE metrics
+            log_val_metrics(
+                writer, fold, val_loss, prev_upd, val_recon_loss, val_kl_loss
+            )
 
     if logger is not None:
         logger.info(f">>> VALIDATION Loss: {val_loss:.4f}")
@@ -299,15 +329,17 @@ def test_fold(
     model.eval()
 
     recons, latent_reps = [], []
-    test_loss = 0.0
+    test_loss, test_recon_loss, test_kl_loss = 0.0, 0.0, 0.0
     with torch.no_grad():
         for batch, labels in tqdm(test_loader, desc="Testing"):
             batch = batch.to(device)
 
             outputs = model(batch)
-            loss = outputs.loss
 
-            test_loss += loss.item()
+            test_loss += outputs.loss.item()
+            if hasattr(outputs, "loss_recon") and hasattr(outputs, "loss_kl"):
+                test_recon_loss += outputs.loss_recon.item()
+                test_kl_loss += outputs.loss_kl.item()
 
             # Data for performance plotting
             recons.extend(list(zip(batch, outputs.x_recon, labels)))
@@ -315,9 +347,17 @@ def test_fold(
 
     # Avg test loss
     test_loss /= len(test_loader)
+    if test_recon_loss != 0.0 and test_kl_loss != 0.0:
+        test_recon_loss /= len(test_loader)
+        test_kl_loss /= len(test_loader)
 
     if writer is not None:
-        writer.add_scalar(f"{fold}/Test/Loss", test_loss)
+        if test_recon_loss == 0.0 and test_kl_loss == 0.0:
+            # Log AE metrics
+            log_val_metrics(writer, fold, test_loss)
+        else:
+            # Log VAE metrics
+            log_val_metrics(writer, fold, test_loss, test_recon_loss, test_kl_loss)
         dutils.plot_recon_performance(recons, scope="Sample", method="Sum", fold=fold)
         dutils.plot_recon_performance(recons, scope="Sample", method="Mean", fold=fold)
         dutils.plot_recon_performance(recons, scope="Gene", method="Sum", fold=fold)
