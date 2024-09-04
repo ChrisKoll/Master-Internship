@@ -65,11 +65,15 @@ def main() -> None:
     logger.debug(model)
     logger.info("Model assembled")
 
+    # List of folds
+    donors = ["D1", "H2", "D5"]
+
     T.fit(
         model,
         config.model.name,
         adata,
         args.layer,
+        donors,
         config.model.optimization,
         config.training.batch_size,
         config.training.training_epochs,
