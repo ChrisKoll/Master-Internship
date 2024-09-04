@@ -19,17 +19,10 @@
                     "activation": "silu"
                 },
                 {
-                    "role": "hidden",
-                    "type": "linear",
-                    "in_dimension": 1250,
-                    "out_dimension": 625,
-                    "activation": "silu"
-                },
-                {
                     "role": "latent_space",
                     "type": "linear",
-                    "in_dimension": 625,
-                    "out_dimension": 100,
+                    "in_dimension": 1250,
+                    "out_dimension": 50,
                     "activation": ""
                 }
             ],
@@ -37,14 +30,7 @@
                 {
                     "role": "input",
                     "type": "linear",
-                    "in_dimension": 100,
-                    "out_dimension": 625,
-                    "activation": "silu"
-                },
-                {
-                    "role": "hidden",
-                    "type": "linear",
-                    "in_dimension": 625,
+                    "in_dimension": 50,
                     "out_dimension": 1250,
                     "activation": "silu"
                 },
@@ -64,7 +50,7 @@
                 }
             ]
         },
-        "loss_function": "mse",
+        "loss_function": "bce",
         "optimization": {
             "optimizer": "adam",
             "learning_rate": 1e-2,
@@ -72,7 +58,7 @@
         }
     },
     "training": {
-        "batch_size": 256,
-        "training_epochs": 25
+        "batch_size": 128,
+        "training_epochs": 50
     }
 }

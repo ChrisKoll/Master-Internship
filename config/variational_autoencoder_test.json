@@ -1,35 +1,28 @@
 {
     "model": {
-        "name": "VAE_SiLU_MSE",
+        "name": "VAE_SiLU_BCE",
         "model_type": "vae",
         "layers": {
             "encoder": [
                 {
                     "role": "input",
                     "type": "linear",
-                    "in_dimension": 33538,
-                    "out_dimension": 16769,
+                    "in_dimension": 5000,
+                    "out_dimension": 2500,
                     "activation": "silu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
-                    "in_dimension": 16769,
-                    "out_dimension": 8384,
-                    "activation": "silu"
-                },
-                {
-                    "role": "hidden",
-                    "type": "linear",
-                    "in_dimension": 8384,
-                    "out_dimension": 4192,
+                    "in_dimension": 2500,
+                    "out_dimension": 1250,
                     "activation": "silu"
                 },
                 {
                     "role": "latent_space",
                     "type": "linear",
-                    "in_dimension": 4192,
-                    "out_dimension": 200,
+                    "in_dimension": 1250,
+                    "out_dimension": 100,
                     "activation": ""
                 }
             ],
@@ -37,34 +30,27 @@
                 {
                     "role": "input",
                     "type": "linear",
-                    "in_dimension": 200,
-                    "out_dimension": 4192,
+                    "in_dimension": 50,
+                    "out_dimension": 1250,
                     "activation": "silu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
-                    "in_dimension": 4192,
-                    "out_dimension": 8384,
-                    "activation": "silu"
-                },
-                {
-                    "role": "hidden",
-                    "type": "linear",
-                    "in_dimension": 8384,
-                    "out_dimension": 16769,
+                    "in_dimension": 1250,
+                    "out_dimension": 2500,
                     "activation": "silu"
                 },
                 {
                     "role": "output",
                     "type": "linear",
-                    "in_dimension": 16769,
-                    "out_dimension": 33538,
+                    "in_dimension": 2500,
+                    "out_dimension": 5000,
                     "activation": ""
                 }
             ]
         },
-        "loss_function": "mse",
+        "loss_function": "bce",
         "optimization": {
             "optimizer": "adam",
             "learning_rate": 1e-2,
@@ -72,7 +58,7 @@
         }
     },
     "training": {
-        "batch_size": 256,
+        "batch_size": 128,
         "training_epochs": 50
     }
 }
