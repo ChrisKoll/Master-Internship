@@ -1,28 +1,28 @@
 {
     "model": {
-        "name": "AE_test",
-        "type": "ae",
+        "name": "VAE_test",
+        "type": "vae",
         "layers": {
             "encoder": [
                 {
                     "role": "input",
                     "type": "linear",
-                    "in_dimension": 5000,
-                    "out_dimension": 2500,
+                    "in_dimension": 1000,
+                    "out_dimension": 600,
                     "activation": "silu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
-                    "in_dimension": 2500,
-                    "out_dimension": 1250,
+                    "in_dimension": 600,
+                    "out_dimension": 300,
                     "activation": "silu"
                 },
                 {
                     "role": "latent_space",
                     "type": "linear",
-                    "in_dimension": 1250,
-                    "out_dimension": 50,
+                    "in_dimension": 300,
+                    "out_dimension": 100,
                     "activation": ""
                 }
             ],
@@ -31,26 +31,26 @@
                     "role": "input",
                     "type": "linear",
                     "in_dimension": 50,
-                    "out_dimension": 1250,
+                    "out_dimension": 300,
                     "activation": "silu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
-                    "in_dimension": 1250,
-                    "out_dimension": 2500,
+                    "in_dimension": 300,
+                    "out_dimension": 600,
                     "activation": "silu"
                 },
                 {
                     "role": "output",
                     "type": "linear",
-                    "in_dimension": 2500,
-                    "out_dimension": 5000,
-                    "activation": "sig"
+                    "in_dimension": 600,
+                    "out_dimension": 1000,
+                    "activation": ""
                 }
             ]
         },
-        "loss_function": "bce",
+        "loss_function": "mse",
         "optimization": {
             "optimizer": "adam",
             "learning_rate": 1e-2,
@@ -59,6 +59,6 @@
     },
     "training": {
         "batch_size": 128,
-        "training_epochs": 50
+        "training_epochs": 5
     }
 }

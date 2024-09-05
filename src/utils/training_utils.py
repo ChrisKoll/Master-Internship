@@ -34,7 +34,7 @@ from tqdm import tqdm
 from src.autoencoder.ae_model import Autoencoder
 import src.utils.data_utils as dutils
 from src.utils.json_utils import OptimizerConfig
-from src.utils.logging_utils import log_train_metrics, log_val_metrics
+from src.utils.logging_utils import log_train_metrics, log_val_metrics, log_test_metrics
 
 __author__ = "Christian Kolland"
 __version__ = 1.0
@@ -82,9 +82,6 @@ def fit(
     writer = SummaryWriter(
         f'runs/hca/{model_name}_{datetime.now().strftime("%d%m%Y-%H%M")}'
     )
-
-    # List of folds
-    # donors = ["D1", "H2", "D5"]
 
     train_fold(
         model,
@@ -354,15 +351,13 @@ def test_fold(
     if writer is not None:
         if test_recon_loss == 0.0 and test_kl_loss == 0.0:
             # Log AE metrics
-            log_val_metrics(writer, fold, test_loss)
+            log_test_metrics(writer, fold, test_loss)
         else:
             # Log VAE metrics
-            log_val_metrics(writer, fold, test_loss, test_recon_loss, test_kl_loss)
+            log_test_metrics(writer, fold, test_loss, test_recon_loss, test_kl_loss)
         dutils.plot_recon_performance(recons, scope="Sample", method="Sum", fold=fold)
-        dutils.plot_recon_performance(recons, scope="Sample", method="Mean", fold=fold)
         dutils.plot_recon_performance(recons, scope="Gene", method="Sum", fold=fold)
-        dutils.plot_recon_performance(recons, scope="Gene", method="Mean", fold=fold)
-        dutils.plot_latent_space(latent_reps)
+        dutils.plot_latent_space(latent_reps, fold=fold)
 
     if logger is not None:
         logger.info(f">>> TEST Loss: {test_loss:.4f}")

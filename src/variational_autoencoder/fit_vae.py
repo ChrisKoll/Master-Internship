@@ -7,7 +7,7 @@ import argparse
 import torch
 
 # Self-built modules
-import src.autoencoder.ae_model as ae
+import src.variational_autoencoder.vae_model as vae
 import src.utils.training_utils as T
 import src.utils.io_utils as ioutils
 from src.utils.logging_utils import setup_logger
@@ -60,7 +60,9 @@ def main() -> None:
     encoder_layers = jutils.assemble_layers(config.model.layers.encoder)
     decoder_layers = jutils.assemble_layers(config.model.layers.decoder)
     # Assemble model
-    model = ae.Autoencoder(encoder_layers, decoder_layers, config.model.loss_function())
+    model = vae.VariationalAutoencoder(
+        encoder_layers, decoder_layers, config.model.loss_function()
+    )
 
     logger.debug(model)
     logger.info("Model assembled")
