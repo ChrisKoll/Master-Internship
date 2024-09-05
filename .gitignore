@@ -3,6 +3,12 @@
 # |=========|
 
 # Project folders
+config/
+!config/autoencoder_dev.json
+!config/variational_autoencoder_dev.json
+data/
+!data/adata_1000x1000_sample.h5ad
+!data/adata_1000x1000_sample_normalized.h5ad
 logs/
 plots/
 runs/
