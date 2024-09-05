@@ -10,8 +10,11 @@ data/
 !data/adata_1000x1000_sample.h5ad
 !data/adata_1000x1000_sample_normalized.h5ad
 logs/
+!logs/.gitkeep
 plots/
+!plots/.gitkeep
 runs/
+!runs/.gitkeep
 
 # |========|
 # | Python |
