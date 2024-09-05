@@ -1,7 +1,7 @@
 {
     "model": {
         "name": "VAE_SiLU_BCE",
-        "model_type": "vae",
+        "type": "vae",
         "layers": {
             "encoder": [
                 {
@@ -46,7 +46,7 @@
                     "type": "linear",
                     "in_dimension": 2500,
                     "out_dimension": 5000,
-                    "activation": ""
+                    "activation": "sig"
                 }
             ]
         },

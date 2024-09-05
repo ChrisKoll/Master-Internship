@@ -1,7 +1,7 @@
 {
     "model": {
-        "name": "AE_SiLU_MSE",
-        "model_type": "ae",
+        "name": "AE_ReLU_BCE",
+        "type": "ae",
         "layers": {
             "encoder": [
                 {
