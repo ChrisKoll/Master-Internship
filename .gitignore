@@ -3,17 +3,17 @@
 # |=========|
 
 # Project folders
-config/
+config/*
 !config/autoencoder_dev.json
 !config/variational_autoencoder_dev.json
-data/
+data/*
 !data/adata_1000x1000_sample.h5ad
-!data/adata_1000x1000_sample_normalized.h5ad
-logs/
+!data/adata_1000x1000_sample_normalized.h5adp
+logs/*
 !logs/.gitkeep
-plots/
+plots/*
 !plots/.gitkeep
-runs/
+runs/*
 !runs/.gitkeep
 
 # |========|
