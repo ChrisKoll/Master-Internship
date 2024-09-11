@@ -12,16 +12,16 @@ debug and information messages to aid in model development and performance track
 Usage:
     - This script is designed to be executed from the command line.
     - The following command-line arguments can be passed:
-        - `--data (-d)`: Path to the data file containing single-cell data (AnnData format).
-        - `--layer (-l)`: Name of the specific data layer in AnnData to be used for training.
-        - `--conf (-c)`: Path to the JSON configuration file that defines model and training
+        -d or --data: Path to the data file containing single-cell data (AnnData format).
+        -l or --layer: Name of the specific data layer in AnnData to be used for training.
+        -c or --conf: Path to the JSON configuration file that defines model and training
             parameters.
-        - `--log (-x)`: Directory path where the log file will be stored. Defaults to 'logs/'.
-        - `--name (-f)`: Optional name for the log file. If not provided, a name will be generated
+        -x or --log: Directory path where the log file will be stored. Defaults to 'logs/'.
+        -f or --name: Optional name for the log file. If not provided, a name will be generated
             automatically.
 
 Functions:
-    - `main()`: The main function that parses arguments, initializes the logger, loads data,
+    - main: The main function that parses arguments, initializes the logger, loads data,
                 sets up the model, and runs the training process.
 """
 
@@ -44,14 +44,12 @@ __author__ = "Christian Kolland"
 __version__ = "1.0"
 
 # Constants
-_PARSER_DESC = "This script trains an autoencoder model using single-cell data stored in an AnnData object."
-_ARG_DATA_HELP = "Path to the AnnData file containing single-cell data."
-_ARG_LAYER_HELP = (
-    "Name of the data layer in the AnnData object to be used for training."
-)
-_ARG_CONF_HELP = "Path to the JSON configuration file that defines the model and training parameters."
-_ARG_LOG_HELP = "Directory path where the log file will be saved. Defaults to 'logs/'."
-_ARG_NAME_HELP = "Optional name for the log file. If not provided, a name will be auto-generated based on the current timestamp."
+_PARSER_DESC = "Script to train a Autoencoder (AE) model."
+_ARG_DATA_HELP = "Path to data file to be used for training VAE."
+_ARG_LAYER_HELP = "Name of data layer that will be used for model fitting."
+_ARG_CONF_HELP = "Path to model configuration JSON file."
+_ARG_LOG_HELP = "Directory path where log file will be saved. Defaults to 'logs/'."
+_ARG_NAME_HELP = "Optional name of log file. If not provided, a name is generated."
 
 
 def main() -> None:
@@ -59,11 +57,11 @@ def main() -> None:
     Main function to initiate training of the autoencoder model.
 
     Command-line Arguments:
-    - `--data (-d)`: Path to the AnnData file.
-    - `--layer (-l)`: Name of the specific data layer from the AnnData object.
-    - `--conf (-c)`: Path to the JSON configuration file.
-    - `--log (-x)`: Directory where logs will be saved (default: 'logs/').
-    - `--name (-f)`: Optional log file name (auto-generated if not provided).
+    -d or --data: Path to the AnnData file.
+    -l or --layer: Name of the specific data layer from the AnnData object.
+    -c or --conf: Path to the JSON configuration file.
+    -x or --log: Directory where logs will be saved (default: 'logs/').
+    -f or --name: Optional log file name (auto-generated if not provided).
     """
     # Add cmd parser
     parser = argparse.ArgumentParser(description=_PARSER_DESC)
@@ -81,8 +79,8 @@ def main() -> None:
     # Initialize logger
     logger = setup_logger("INFO", log_dir=args.log, log_file=args.name)
 
-    # >>> Start main functionality
-    # Determine if CUDA is available, otherwise use CPU
+    # >>> Functionality starts here
+    # Determine whether to use GPU or CPU for model computation
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # Load the AnnData object from the specified file
@@ -104,7 +102,7 @@ def main() -> None:
     logger.debug(model)
     logger.info("Model assembled")
 
-    # # List of donors to be used for the testing process
+    # List of donors to be used for the testing process
     donors = ["D1", "H2", "D5"]
 
     # Initialize the training configuration with provided parameters

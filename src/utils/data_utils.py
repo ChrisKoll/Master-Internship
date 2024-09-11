@@ -81,17 +81,6 @@ class SparseDataset(Dataset):
     processed in PyTorch. It provides functionality for retrieving individual
     rows of sparse matrices as dense PyTorch tensors along with their associated
     labels.
-
-    Attributes:
-        sparse_data (csr_matrix): A SciPy sparse matrix in CSR format containing
-                                  the dataset.
-        anno_cell_type (list[str]): A list of annotation labels (cell types) for
-                                    each row in the sparse matrix.
-
-    Methods:
-        __len__: Returns the total number of samples in the dataset.
-        __getitem__: Retrieves a specific sample from the dataset, returning both
-                     the data and its label.
     """
 
     def __init__(self, sparse_data: csr_matrix, anno_cell_type: list[str]):

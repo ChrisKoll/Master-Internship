@@ -53,15 +53,6 @@ class Training:
     and logging metrics during training, validation, and testing of the model. The training
     is done using an outer cross-validation technique, ensuring that the model is tested on
     completely unseen data.
-
-    Attributes:
-        model (Autoencoder or VariationalAutoencoder): The autoencoder model to be trained.
-        model_name (str): A string identifier for the model, used for logging and saving.
-        adata (AnnData): The single-cell data stored in an AnnData object.
-        data_layer (str): The key within the `adata.layers` where the model input data is stored.
-        optimizer (torch.optim.Optimizer): The optimizer to be used for model training.
-        training (TrainingConfig): Configuration settings for the training process.
-        logger (Optional[Logger]): A logger instance to log information throughout the training.
     """
 
     def __init__(

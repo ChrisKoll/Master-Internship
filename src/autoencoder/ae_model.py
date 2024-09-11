@@ -1,13 +1,23 @@
 """
-Autoencoder Implementation.
+Autoencoder (AE) Implementation.
 
-This module contains an implementation of an Autoencoder using PyTorch.
-The Autoencoder consists of an encoder and a decoder, and it is trained
-to reconstruct the input data.
+This module provides an implementation of a standard Autoencoder using PyTorch. 
+An Autoencoder is a type of neural network trained to encode input data into 
+a lower-dimensional latent space and then decode it back to reconstruct the 
+original input. The goal of the Autoencoder is to learn an efficient 
+representation (latent space) of the input data.
 
 Classes:
-    - AEOutput: Dataclass for Autoencoder output.
-    - Autoencoder: Class implementing the Autoencoder model.
+    - AEOutput: A dataclass that holds the output of the Autoencoder model, including the latent
+        space representation, reconstructed data, and reconstruction loss.
+    - Autoencoder: A class that implements the Autoencoder model with an encoder, decoder, and loss
+        computation.
+
+Methods:
+    - encode: Encodes the input data into a latent representation (latent space).
+    - decode: Decodes the latent space data back into the original input space.
+    - forward: Executes the full forward pass, including encoding, decoding, and optional 
+        loss computation.
 """
 
 __author__ = "Christian Kolland"
@@ -26,10 +36,12 @@ class AEOutput:
     """
     Dataclass for Autoencoder output.
 
+    This dataclass contains the relevant outputs of the Autoencoder's forward pass.
+
     Attributes:
-        z_sample (torch.Tensor): The sampled value of the latent variable z.
+        z_sample (torch.Tensor): The latent space representation of the input data.
         x_recon (torch.Tensor): The reconstructed output from the Autoencoder.
-        loss (torch.Tensor): The overall loss of the Autoencoder.
+        loss (torch.Tensor): The computed reconstruction loss (if available).
     """
 
     z_sample: torch.Tensor
@@ -41,16 +53,16 @@ class Autoencoder(nn.Module):
     """
     Autoencoder (AE) class.
 
-    Args:
-        encoder_layers (list): List of encoder layers.
-        decoder_layers (list): List of decoder layers.
-        loss_function (nn.Module): Loss function used for evaluation.
+    The Autoencoder class implements the basic structure of an Autoencoder, consisting
+    of an encoder that compresses the input data into a latent space and a decoder
+    that reconstructs the input from the latent representation. It also computes
+    the reconstruction loss using a specified loss function.
 
     Attributes:
-        encoder (nn.Sequential): Sequential container for encoder layers.
-        decoder (nn.Sequential): Sequential container for decoder layers.
-        loss_function (nn.Module): Loss function used for evaluation.
-        device (torch.device): Device to run the model on (CPU or GPU).
+        encoder (nn.Sequential): A sequential container holding the encoder layers.
+        decoder (nn.Sequential): A sequential container holding the decoder layers.
+        loss_function (nn.Module): The loss function used for calculating the reconstruction loss.
+        device (torch.device): The device (CPU or GPU) on which the model will be executed.
     """
 
     def __init__(
@@ -59,6 +71,14 @@ class Autoencoder(nn.Module):
         decoder_layers: list[nn.Module],
         loss_function: nn.Module,
     ) -> None:
+        """
+        Initializes the Autoencoder model by setting up the encoder, decoder, and loss function.
+
+        Args:
+            encoder_layers (list[nn.Module]): A list of PyTorch layers for the encoder.
+            decoder_layers (list[nn.Module]): A list of PyTorch layers for the decoder.
+            loss_function (nn.Module): The loss function used to compute reconstruction loss.
+        """
         super(Autoencoder, self).__init__()
 
         # Define encoder and decoder as sequential containers
@@ -74,38 +94,49 @@ class Autoencoder(nn.Module):
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
         """
-        Encodes the input data into the latent space.
+        Encodes the input data into a lower-dimensional latent space.
+
+        This method passes the input data through the encoder, resulting in a
+        compressed latent representation.
 
         Args:
-            x (torch.Tensor): Input data.
+            x (torch.Tensor): The input data to encode.
 
         Returns:
-            torch.Tensor: Input data compressed to latent space.
+            torch.Tensor: The latent space representation of the input data.
         """
         return self.encoder(x)
 
     def decode(self, z: torch.Tensor) -> torch.Tensor:
         """
-        Decodes the data from the latent space to the original input space.
+        Decodes the latent space representation back into the original input space.
+
+        This method takes the compressed latent space representation and passes
+        it through the decoder to reconstruct the original data.
 
         Args:
-            z (torch.Tensor): Data in the latent space.
+            z (torch.Tensor): The latent space representation to decode.
 
         Returns:
-            torch.Tensor: Reconstructed data in the original input space.
+            torch.Tensor: The reconstructed output data.
         """
         return self.decoder(z)
 
     def forward(self, x: torch.Tensor, compute_loss: bool = True) -> AEOutput:
         """
-        Performs a forward pass of the Autoencoder.
+        Performs a full forward pass of the Autoencoder.
+
+        This method encodes the input data, decodes the latent representation,
+        and optionally computes the reconstruction loss. If `compute_loss` is False,
+        only the encoded latent space and reconstructed output are returned.
 
         Args:
-            x (torch.Tensor): Input data.
-            compute_loss (bool): Whether to compute the loss or not.
+            x (torch.Tensor): The input data to be encoded and decoded.
+            compute_loss (bool): Whether to compute and return the reconstruction loss.
 
         Returns:
-            AEOutput: Autoencoder output dataclass.
+            AEOutput: A dataclass containing the latent space sample, reconstructed output, and
+                optional loss.
         """
         z = self.encode(x)  # Encode input to latent space
         recon_x = self.decode(z)  # Decode latent representation to reconstruct input

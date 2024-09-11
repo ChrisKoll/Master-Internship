@@ -1,4 +1,22 @@
-"""Docstring."""
+"""
+Variational Autoencoder (VAE) Implementation.
+
+This module defines a Variational Autoencoder (VAE) model, including its forward pass,
+reparameterization trick, and loss computation. It is capable of encoding input data into
+a latent space, decoding from the latent space to the original space, and computing the 
+loss using reconstruction and KL divergence terms.
+
+Classes:
+    - VAEOutput: A dataclass that holds the output of the VAE model.
+    - VariationalAutoencoder: A class implementing a Variational Autoencoder with an 
+      encoder, decoder, and the ability to compute reconstruction and KL divergence loss.
+
+Methods:
+    - encode: Encodes the input data into a normal distribution in latent space.
+    - reparameterize: Applies the reparameterization trick to sample from the latent space.
+    - decode: Decodes the latent space representation into the original input space.
+    - forward: Performs the forward pass through the VAE, optionally computing the loss.
+"""
 
 __author__ = "Christian Kolland"
 __version__ = "1.0"
@@ -38,12 +56,17 @@ class VariationalAutoencoder(nn.Module):
     """
     Variational Autoencoder (VAE) class.
 
-    Args:
-        size_input_layer (int): Dimensionality of the input data.
-        size_layer_one (int): Dimensionality of hidden layer 1.
-        size_layer_two (int): Dimensionality of hidden layer 2.
-        size_layer_three (int): Dimensionality of hidden layer 3.
-        size_latent_space (int): Dimensionality of the latent space.
+    This class defines a VAE model with an encoder and a decoder. The encoder compresses
+    the input into a latent space, and the decoder reconstructs the input from the latent
+    space. The model also computes the VAE loss, which consists of reconstruction loss
+    and KL divergence.
+
+    Attributes:
+        encoder (nn.Sequential): A sequential container holding the encoder layers.
+        softplus (nn.Softplus): Sofplus function from PyTorch
+        decoder (nn.Sequential): A sequential container holding the decoder layers.
+        loss_function (nn.Module): The loss function used for calculating the reconstruction loss.
+        device (torch.device): The device (CPU or GPU) on which the model will be executed.
     """
 
     def __init__(
@@ -52,6 +75,14 @@ class VariationalAutoencoder(nn.Module):
         decoder_layers: list[nn.Module],
         loss_function: nn.Module,
     ):
+        """
+        Initializes the VAE with encoder, decoder, and loss function.
+
+        Args:
+            encoder_layers (list[nn.Module]): A list of PyTorch layers for the encoder.
+            decoder_layers (list[nn.Module]): A list of PyTorch layers for the decoder.
+            loss_function (nn.Module): The loss function used to compute reconstruction loss.
+        """
         super(VariationalAutoencoder, self).__init__()
 
         # Define encoder and decoder as sequential containers
@@ -66,16 +97,16 @@ class VariationalAutoencoder(nn.Module):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.to(self.device)
 
-    def encode(self, x, eps: float = 1e-8):
+    def encode(self, x, eps: float = 1e-8) -> torch.distributions.MultivariateNormal:
         """
-        Encodes the input data into the latent space.
+        Encodes the input data into the latent space as a multivariate normal distribution.
 
         Args:
-            x (torch.Tensor): Input data.
-            eps (float): Small value to avoid numerical instability.
+            x (torch.Tensor): Input data to encode.
+            eps (float): A small value to avoid numerical instability in the variance.
 
         Returns:
-            torch.distributions.MultivariateNormal: Normal distribution of the encoded data.
+            torch.distributions.MultivariateNormal: A normal distribution in the latent space.
         """
         x = self.encoder(x)
         mu, logvar = torch.chunk(x, 2, dim=1)
@@ -84,39 +115,46 @@ class VariationalAutoencoder(nn.Module):
 
         return torch.distributions.MultivariateNormal(mu, scale_tril=scale_tril)
 
-    def reparameterize(self, dist):
+    def reparameterize(self, dist) -> torch.Tensor:
         """
-        Reparameterizes the encoded data to sample from the latent space.
+        Reparameterizes the encoded distribution to sample from it.
+
+        The reparameterization trick allows for backpropagation through stochastic nodes
+        by separating the randomness from the parameters of the distribution.
 
         Args:
-            dist (torch.distributions.MultivariateNormal): Normal distribution of the encoded data.
+            dist (torch.distributions.MultivariateNormal): The latent distribution from the encoder.
+
         Returns:
-            torch.Tensor: Sampled data from the latent space.
+            torch.Tensor: A sample from the latent distribution.
         """
         return dist.rsample()
 
-    def decode(self, z):
+    def decode(self, z) -> torch.Tensor:
         """
-        Decodes the data from the latent space to the original input space.
+        Decodes the latent space sample into the original input space.
 
         Args:
-            z (torch.Tensor): Data in the latent space.
+            z (torch.Tensor): Sampled latent space data.
 
         Returns:
-            torch.Tensor: Reconstructed data in the original input space.
+            torch.Tensor: Reconstructed input data.
         """
         return self.decoder(z)
 
-    def forward(self, x, compute_loss: bool = True):
+    def forward(self, x, compute_loss: bool = True) -> VAEOutput:
         """
-        Performs a forward pass of the VAE.
+        Performs a forward pass of the VAE, encoding the input, sampling from the latent space,
+        decoding the latent representation, and optionally computing the VAE loss.
 
         Args:
-            x (torch.Tensor): Input data.
-            compute_loss (bool): Whether to compute the loss or not.
+            x (torch.Tensor): The input data.
+            compute_loss (bool): If True, the loss (reconstruction + KL divergence) is computed.
+                If False, only the encoded and decoded data are returned.
 
         Returns:
-            VAEOutput: VAE output dataclass.
+            VAEOutput: A dataclass containing the encoded distribution, latent sample,
+                reconstructed output, and optionally the losses.
         """
         dist = self.encode(x)
         z = self.reparameterize(dist)
