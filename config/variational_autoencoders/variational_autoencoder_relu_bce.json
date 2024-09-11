@@ -1,0 +1,78 @@
+{
+    "model": {
+        "name": "VAE_ReLU_BCE",
+        "type": "vae",
+        "layers": {
+            "encoder": [
+                {
+                    "role": "input",
+                    "type": "linear",
+                    "in_dimension": 5000,
+                    "out_dimension": 2500,
+                    "activation": "relu"
+                },
+                {
+                    "role": "hidden",
+                    "type": "linear",
+                    "in_dimension": 2500,
+                    "out_dimension": 1250,
+                    "activation": "relu"
+                },
+                {
+                    "role": "hidden",
+                    "type": "linear",
+                    "in_dimension": 1250,
+                    "out_dimension": 625,
+                    "activation": "relu"
+                },
+                {
+                    "role": "latent_space",
+                    "type": "linear",
+                    "in_dimension": 625,
+                    "out_dimension": 200,
+                    "activation": ""
+                }
+            ],
+            "decoder": [
+                {
+                    "role": "input",
+                    "type": "linear",
+                    "in_dimension": 100,
+                    "out_dimension": 625,
+                    "activation": "relu"
+                },
+                {
+                    "role": "hidden",
+                    "type": "linear",
+                    "in_dimension": 625,
+                    "out_dimension": 1250,
+                    "activation": "relu"
+                },
+                {
+                    "role": "hidden",
+                    "type": "linear",
+                    "in_dimension": 1250,
+                    "out_dimension": 2500,
+                    "activation": "relu"
+                },
+                {
+                    "role": "output",
+                    "type": "linear",
+                    "in_dimension": 2500,
+                    "out_dimension": 5000,
+                    "activation": "sig"
+                }
+            ]
+        },
+        "loss_function": "bce",
+        "optimization": {
+            "optimizer": "adam",
+            "learning_rate": 1e-2,
+            "weight_decay": 1e-3
+        }
+    },
+    "training": {
+        "batch_size": 128,
+        "training_epochs": 100
+    }
+}
