@@ -1,5 +1,5 @@
 """
-JSON Validation and Model Configuration Module.
+Unitility Functions for JSON Validation and Model Configuration.
 
 This module handles the configuration of neural network layers, optimizers, and 
 training parameters using the Pydantic library for data validation. It supports 

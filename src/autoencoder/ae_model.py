@@ -1,13 +1,13 @@
 """
-Autoencoder implementation.
+Autoencoder Implementation.
 
 This module contains an implementation of an Autoencoder using PyTorch.
 The Autoencoder consists of an encoder and a decoder, and it is trained
 to reconstruct the input data.
 
 Classes:
-    AEOutput: Dataclass for Autoencoder output.
-    Autoencoder: Class implementing the Autoencoder model.
+    - AEOutput: Dataclass for Autoencoder output.
+    - Autoencoder: Class implementing the Autoencoder model.
 """
 
 __author__ = "Christian Kolland"
