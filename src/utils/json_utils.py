@@ -1,289 +1,287 @@
 """
-This module contains utility functions for loading and assembling neural network models from a configuration file.
+Unitility Functions for JSON Validation and Model Configuration.
 
-The main functionalities provided by this module include:
-- Loading a model configuration from a JSON file.
-- Assembling a neural network model based on the configuration.
-- Importing specific layers, activation functions, loss functions, and optimizers based on the configuration.
+This module handles the configuration of neural network layers, optimizers, and 
+training parameters using the Pydantic library for data validation. It supports 
+the assembly of encoder and decoder layers from configuration files, and includes 
+utilities for importing and validating configuration data.
 
-Constants:
-    - _ACTIVATION_FUNCTIONS: Mapping of supported activation functions to their corresponding PyTorch classes.
-    - _LAYER_ROLES: List of supported layer roles in the model.
-    - _LAYER_TYPES: Mapping of supported layer types to their corresponding PyTorch classes.
-    - _LOSS_FUNCTIONS: Mapping of supported loss functions to their corresponding PyTorch classes.
-    - _OPTIMIZERS: Mapping of supported optimizers to their corresponding PyTorch classes.
+Classes:
+    - LayerConfig: Configuration class for individual layers, including type, dimensions, and activation function.
+    - CoderConfig: Configuration class for encoder and decoder layers.
+    - OptimizerConfig: Configuration class for optimizer settings.
+    - ModelConfig: Configuration class for the model, including layers and optimization settings.
+    - TrainingConfig: Configuration class for training parameters such as batch size and epochs.
+    - Config: Master configuration class that encapsulates the model and training configurations.
 
 Functions:
-    - log_message: Logs a message using the provided logger.
-    - load_config_file: Loads the model configuration from a JSON file.
-    - import_model_params: Imports model parameters from a JSON file.
-    - assemble_model: Assembles the encoder and decoder layers of the model.
-    - assemble_structure: Assembles a list of layers based on the provided configuration.
-    - assemble_layer: Assembles a single layer based on the provided configuration.
-    - assemble_layer_with_optional_activation: Assembles a layer with an optional activation function.
-    - import_loss_function: Imports a loss function based on the provided string identifier.
-    - import_optimizer: Imports an optimizer based on the provided string identifier.
+    - import_config_json: Imports and parses a JSON configuration file into a dictionary.
+    - assemble_layers: Assembles layers based on the provided list of LayerConfig objects.
+    - assemble_layer: Assembles a single layer based on the LayerConfig object.
 """
 
 # Standard imports
-from dataclasses import dataclass
 import json
-from logging import Logger
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Tuple
 
 # Third-party imports
+from pydantic import BaseModel, field_validator
 import torch.nn as nn
 import torch.optim as optim
 
-# Self-built modules
-from utils.dataclasses import OptimizerConfig
-
-# TODO: Create validation for JSON schema
-# from jsonschema import validate
-
 
 __author__ = "Christian Kolland"
-__version__ = "1.1"
+__version__ = "1.2"
 
 # Constants
-_ACTIVATION_FUNCTIONS = {"relu": nn.ReLU, "silu": nn.SiLU}
 _LAYER_ROLES = ["input", "hidden", "latent_space", "output"]
 _LAYER_TYPES = {"linear": nn.Linear}
-_LOSS_FUNCTIONS = {"mse": nn.MSELoss, "bce": nn.BCELoss}
+_ACTIVATION_FUNCTIONS = {"": None, "relu": nn.ReLU, "silu": nn.SiLU, "sig": nn.Sigmoid}
 _OPTIMIZERS = {"adam": optim.Adam}
+_LOSS_FUNCTIONS = {"mse": nn.MSELoss, "bce": nn.BCELoss}
 
 
-@dataclass
-class ModelConfig:
+class LayerConfig(BaseModel):
     """
-    Data class representing the model configuration.
+    Configuration for a single neural network layer.
 
     Attributes:
-        version (str): Version of the model.
-        encoder_layers (List[nn.Module]): List of encoder layers.
-        decoder_layers (List[nn.Module]): List of decoder layers.
-        loss_function (nn.Module): Loss function used in the model.
-        optimizer (Any): Optimizer used for training the model.
-        batch_size (int): Batch size for training.
-        num_epochs (int): Number of training epochs.
+        role (str): Role of the layer in the network (e.g., input, hidden, latent_space, output).
+        type (str): Type of the layer (e.g., linear).
+        in_dimension (int): Input dimension of the layer.
+        out_dimension (int): Output dimension of the layer.
+        activation (str): Activation function applied after the layer (e.g., relu, silu).
     """
 
-    version: str
-    encoder_layers: List[nn.Module]
-    decoder_layers: List[nn.Module]
-    loss_function: nn.Module
-    optimizer: Any
+    role: str
+    type: str
+    in_dimension: int
+    out_dimension: int
+    activation: str
+
+    @field_validator("role")
+    def validate_role(cls, value):
+        """
+        Validates the role of the layer.
+
+        Args:
+            value (str): The role of the layer to be validated.
+
+        Returns:
+            str: The validated role.
+
+        Raises:
+            ValueError: If the role is not one of the allowed values.
+        """
+        if value in _LAYER_ROLES:
+            return value
+        else:
+            raise ValueError(
+                f"Invalid layer role: {value}. Must be one of: {_LAYER_ROLES}"
+            )
+
+    @field_validator("type")
+    def validate_type(cls, value):
+        """
+        Validates the type of the layer.
+
+        Args:
+            value (str): The type of the layer to be validated.
+
+        Returns:
+            type: The corresponding PyTorch layer type.
+
+        Raises:
+            ValueError: If the type is not one of the allowed values.
+        """
+        if value in _LAYER_TYPES.keys():
+            return _LAYER_TYPES[value]
+        else:
+            raise ValueError(
+                f"Invalid layer role: {value}. Must be one of: {_LAYER_TYPES.keys()}"
+            )
+
+    @field_validator("activation")
+    def validate_activation(cls, value):
+        """
+        Validates the activation function for the layer.
+
+        Args:
+            value (str): The activation function to be validated.
+
+        Returns:
+            Optional[torch.nn.Module]: The corresponding PyTorch activation function, or None.
+
+        Raises:
+            ValueError: If the activation function is not one of the allowed values.
+        """
+        if value in _ACTIVATION_FUNCTIONS.keys():
+            return _ACTIVATION_FUNCTIONS[value]
+        else:
+            raise ValueError(
+                f"Invalid layer role: {value}. Must be one of: {_ACTIVATION_FUNCTIONS.keys()}"
+            )
+
+
+class CoderConfig(BaseModel):
+    """
+    Configuration for encoder and decoder layers.
+
+    Attributes:
+        encoder (list[LayerConfig]): List of layer configurations for the encoder.
+        decoder (list[LayerConfig]): List of layer configurations for the decoder.
+    """
+
+    encoder: list[LayerConfig]
+    decoder: list[LayerConfig]
+
+
+class OptimizerConfig(BaseModel):
+    """
+    Configuration for the optimizer used in model training.
+
+    Attributes:
+        optimizer (str): Name of the optimizer (e.g., adam).
+        learning_rate (float): Learning rate for the optimizer.
+        weight_decay (float): Weight decay (L2 regularization) for the optimizer.
+    """
+
+    optimizer: str
+    learning_rate: float
+    weight_decay: float
+
+    @field_validator("optimizer")
+    def validate_optimizer(cls, value):
+        """
+        Validates the optimizer type.
+
+        Args:
+            value (str): The optimizer to be validated.
+
+        Returns:
+            type: The corresponding PyTorch optimizer.
+
+        Raises:
+            ValueError: If the optimizer is not one of the allowed values.
+        """
+        if value in _OPTIMIZERS.keys():
+            return _OPTIMIZERS[value]
+        else:
+            raise ValueError(
+                f"Invalid optimizer: {value}. Must be one of: {_OPTIMIZERS.keys()}"
+            )
+
+
+class ModelConfig(BaseModel):
+    """
+    Configuration for the model architecture and training.
+
+    Attributes:
+        name (str): Name of the model.
+        type (str): Type of the model.
+        loss_function (str): Loss function to be used during training.
+        layers (CoderConfig): Configuration for the model's layers.
+        optimization (OptimizerConfig): Configuration for the model's optimizer.
+    """
+
+    name: str
+    type: str
+    loss_function: str
+    layers: CoderConfig
+    optimization: OptimizerConfig
+
+    @field_validator("loss_function")
+    def validate_loss_function(cls, value):
+        """
+        Validates the loss function type.
+
+        Args:
+            value (str): The loss function to be validated.
+
+        Returns:
+            type: The corresponding PyTorch loss function.
+
+        Raises:
+            ValueError: If the loss function is not one of the allowed values.
+        """
+        if value in _LOSS_FUNCTIONS.keys():
+            return _LOSS_FUNCTIONS[value]
+        else:
+            raise ValueError(
+                f"Invalid loss function: {value}. Must be one of: {_LOSS_FUNCTIONS.keys()}"
+            )
+
+
+class TrainingConfig(BaseModel):
+    """
+    Configuration for training parameters.
+
+    Attributes:
+        batch_size (int): Number of samples per batch.
+        training_epochs (int): Number of epochs for training.
+    """
+
     batch_size: int
-    num_epochs: int
+    training_epochs: int
 
 
-def log_message(logger: Optional[Logger], message: str, level: str = "info") -> None:
+class Config(BaseModel):
     """
-    Log a message using the provided logger.
+    Master configuration class encapsulating model and training configurations.
+
+    Attributes:
+        model (ModelConfig): Model configuration including layers, loss function, and optimizer.
+        training (TrainingConfig): Training configuration including batch size and epochs.
+    """
+
+    model: ModelConfig
+    training: TrainingConfig
+
+
+def import_config_json(file_path: str) -> dict:
+    """
+    Imports and parses a JSON configuration file into a dictionary.
 
     Args:
-        logger (Optional[Logger]): Logger instance for logging information. If None, no logging is performed.
-        message (str): The message to log.
-        level (str, optional): The logging level. Defaults to "info".
+        file_path (str): The path to the JSON configuration file.
 
     Returns:
-        None
-    """
-    if logger:
-        getattr(logger, level)(message)
-
-
-def load_config_file(path_to_conf: str, logger: Optional[Logger] = None) -> ModelConfig:
-    """
-    Load the model configuration from a JSON file.
-
-    This function loads a configuration file, extracts the model-related and
-    training-related configurations, and returns them as a ModelConfig instance.
-
-    Args:
-        path_to_conf (str): Path to the configuration file.
-        logger (Optional[Logger]): Logger instance for logging information. Defaults to None.
-
-    Returns:
-        ModelConfig: An instance of ModelConfig containing the model and training configurations.
-
-    Raises:
-        ValueError: If any configuration is invalid.
-    """
-    config = import_model_params(path_to_conf)
-    log_message(logger, config, "debug")
-    log_message(logger, "Config file loaded.", "info")
-
-    model_config = config["model"]
-    train_config = config["training"]
-
-    encoder_layers, decoder_layers = assemble_model(model_config["layers"])
-
-    return ModelConfig(
-        version=model_config["version"],
-        encoder_layers=encoder_layers,
-        decoder_layers=decoder_layers,
-        loss_function=import_loss_function(model_config["loss_function"]),
-        optimizer=import_optimizer(model_config["optimization"]),
-        batch_size=train_config["batch_size"],
-        num_epochs=train_config["training_epochs"],
-    )
-
-
-def import_model_params(file_path: str) -> Dict[str, Any]:
-    """
-    Assemble the encoder and decoder layers of the model based on the configuration.
-
-    Args:
-        layers_config (dict): Dictionary containing the encoder and decoder layer configurations.
-
-    Returns:
-        Tuple[List[nn.Module], List[nn.Module]]: A tuple containing the assembled encoder and decoder layers.
-
+        dict: The configuration data parsed from the JSON file.
     """
     with open(file_path, "r") as file:
         return json.load(file)
 
 
-def assemble_model(layers_config: dict) -> Tuple[List[nn.Module], List[nn.Module]]:
+def assemble_layers(
+    layer_configs: list[LayerConfig],
+) -> Tuple[list[nn.Module], list[nn.Module]]:
     """
-    Assemble the encoder and decoder layers of the model based on the configuration.
+    Assembles layers based on the provided list of LayerConfig objects.
 
     Args:
-        layers_config (dict): Dictionary containing the encoder and decoder layer configurations.
+        layer_configs (list[LayerConfig]): List of LayerConfig objects for assembling layers.
 
     Returns:
-        Tuple[List[nn.Module], List[nn.Module]]: A tuple containing the assembled encoder and decoder layers.
+        Tuple[list[nn.Module], list[nn.Module]]: A tuple containing the assembled layers.
     """
-    return (
-        assemble_structure(layers_config["encoder"]),
-        assemble_structure(layers_config["decoder"]),
-    )
+    # Outer loop `for config in layer_configs`
+    # Inner loop `for layer in assemble_layer(config)`
+    return [layer for config in layer_configs for layer in assemble_layer(config)]
 
 
-def assemble_structure(layers: List[Dict[str, Any]]) -> List[nn.Module]:
+def assemble_layer(layer_config: LayerConfig) -> list[nn.Module]:
     """
-    Assemble a list of layers based on the provided configuration.
+    Assembles a single layer based on the LayerConfig object.
 
     Args:
-        layers (List[Dict[str, Any]]): List of dictionaries representing the layer configurations.
+        layer_config (LayerConfig): Configuration for the layer to be assembled.
 
     Returns:
-        List[nn.Module]: A list of assembled layers.
+        list[nn.Module]: A list containing the layer and its activation function, if applicable.
     """
-    return [layer for config in layers for layer in assemble_layer(config)]
+    layer = [layer_config.type(layer_config.in_dimension, layer_config.out_dimension)]
 
+    if layer_config.activation is not None:
+        layer.append(layer_config.activation())
 
-def assemble_layer(layer: Dict[str, Any]) -> List[nn.Module]:
-    """
-    Assemble a single layer based on the provided configuration.
-
-    This function handles both the layer type and the optional activation function.
-
-    Args:
-        layer (Dict[str, Any]): Dictionary containing the configuration for the layer.
-
-    Returns:
-        List[nn.Module]: A list containing the assembled layer(s).
-
-    Raises:
-        ValueError: If the layer role or type is not valid.
-    """
-    if layer["role"] not in _LAYER_ROLES:
-        raise ValueError(
-            f"Invalid layer role: {layer['role']}. Must be one of: {_LAYER_ROLES}"
-        )
-
-    return assemble_layer_with_optional_activation(
-        layer["type"],
-        layer["in_dimension"],
-        layer["out_dimension"],
-        layer.get("activation"),
-    )
-
-
-def assemble_layer_with_optional_activation(
-    layer_type: str, in_dim: int, out_dim: int, activation: Optional[str] = None
-) -> List[nn.Module]:
-    """
-    Assemble a layer with an optional activation function.
-
-    Args:
-        layer_type (str): The type of the layer (e.g., 'linear').
-        in_dim (int): The input dimension of the layer.
-        out_dim (int): The output dimension of the layer.
-        activation (Optional[str], optional): The activation function to use. Defaults to None.
-
-    Returns:
-        List[nn.Module]: A list containing the assembled layer and, if specified, the activation layer.
-
-    Raises:
-        ValueError: If the layer type or activation function is not valid.
-    """
-    if layer_type not in _LAYER_TYPES:
-        raise ValueError(
-            f"Invalid layer type: {layer_type}. Must be one of: {list(_LAYER_TYPES.keys())}"
-        )
-
-    layers = [_LAYER_TYPES[layer_type](in_dim, out_dim)]
-
-    if activation:
-        if activation not in _ACTIVATION_FUNCTIONS:
-            raise ValueError(
-                f"Invalid activation function: {activation}. Must be one of: {list(_ACTIVATION_FUNCTIONS.keys())}"
-            )
-        layers.append(_ACTIVATION_FUNCTIONS[activation]())
-
-    return layers
-
-
-def import_loss_function(loss_function: str) -> nn.Module:
-    """
-    Import a loss function based on the provided string identifier.
-
-    Args:
-        loss_function (str): The identifier for the loss function (e.g., 'mse', 'bce').
-
-    Returns:
-        nn.Module: The PyTorch loss function module corresponding to the identifier.
-
-    Raises:
-        ValueError: If the loss function identifier is not valid.
-    """
-    if loss_function not in _LOSS_FUNCTIONS:
-        raise ValueError(
-            f"Invalid loss function: {loss_function}. Must be one of: {list(_LOSS_FUNCTIONS.keys())}"
-        )
-    return _LOSS_FUNCTIONS[loss_function]()
-
-
-def import_optimizer(parameters):
-    """Docstring."""
-    return OptimizerConfig(
-        parameters["optimizer"], parameters["learning_rate"], parameters["weight_decay"]
-    )
-
-
-def configure_optimizer(
-    params: Any, optimizer: str, learning_rate: float = 1e-2, weight_decay: float = 1e-3
-) -> optim.Optimizer:
-    """
-    Import an optimizer based on the provided string identifier.
-
-    Args:
-        params (Any): The parameters to be optimized.
-        optimizer (str): The identifier for the optimizer (e.g., 'adam').
-        learning_rate (float, optional): The learning rate for the optimizer. Defaults to 1e-2.
-        weight_decay (float, optional): The weight decay (L2 penalty) for the optimizer. Defaults to 1e-3.
-
-    Returns:
-        optim.Optimizer: The PyTorch optimizer corresponding to the identifier.
-
-    Raises:
-        ValueError: If the optimizer identifier is not valid.
-    """
-    if optimizer not in _OPTIMIZERS:
-        raise ValueError(
-            f"Invalid optimizer: {optimizer}. Must be one of: {list(_OPTIMIZERS.keys())}"
-        )
-    return _OPTIMIZERS[optimizer](params, lr=learning_rate, weight_decay=weight_decay)
+    return layer

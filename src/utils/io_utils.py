@@ -1,13 +1,13 @@
 """
-Data I/O Utilities Module.
+Utility Functions for Data I/O.
 
-This module provides utility functions for loading and saving single-cell data using the AnnData format. 
-It includes functions for loading entire datasets, loading specific layers of data, and saving transformed data layers.
+This module provides utility functions for loading and saving single-cell data in the AnnData format. It supports loading entire datasets, extracting specific layers as PyTorch tensors, and saving transformed data back into AnnData objects.
 
 Functions:
-    - load_adata: Loads an AnnData object from a specified file path.
-    - load_adata_layer: Loads a specific layer of an AnnData object as a PyTorch tensor.
-    - save_adata_layer: Saves a transformed data layer into an AnnData object and writes it to a file.
+    - load_adata: Loads an AnnData object from a specified .h5ad file path.
+    - load_adata_layer: Loads a specific data layer from an AnnData object as a PyTorch tensor.
+    - save_adata_layer: Saves a transformed data layer into an AnnData object and writes it to 
+        a h5ad file.
 """
 
 # Standard imports
@@ -26,17 +26,18 @@ __version__ = "1.0"
 
 def load_adata(path_to_data: str, logger: Optional[Logger] = None) -> AnnData:
     """
-    Load an AnnData object from a specified file path.
+    Loads an AnnData object from a specified file path.
 
-    This function reads an AnnData (.h5ad) file and returns the corresponding AnnData object.
-    Optionally logs the loading process using the provided logger.
+    This function reads a h5ad file containing single-cell data and returns the loaded
+    AnnData object. Optionally, a logger can be provided to log the loading process.
 
     Args:
-        path_to_data (str): Path to the .h5ad file containing the single-cell data.
-        logger (Optional[Logger]): Logger instance for logging information. Defaults to None.
+        path_to_data (str): The file path to the .h5ad file.
+        logger (Optional[Logger]): A logger instance for logging information about the loading
+            process. If None, no logging will occur. Defaults to None.
 
     Returns:
-        AnnData: The loaded AnnData object.
+        AnnData: The loaded AnnData object containing single-cell data and metadata.
     """
     if logger is not None:
         logger.info(f"Start loading dataset: {basename(path_to_data)}")
@@ -53,18 +54,20 @@ def load_adata_layer(
     path_to_data: str, layer: str, logger: Optional[Logger] = None
 ) -> Tensor:
     """
-    Load a specific layer of an AnnData object as a PyTorch tensor.
+    Loads a specific layer from an AnnData object as a PyTorch tensor.
 
-    This function reads an AnnData (.h5ad) file, extracts a specified data layer,
-    and returns it as a PyTorch tensor. Optionally logs the process using the provided logger.
+    This function reads a h5ad file, extracts a specified data layer from the AnnData object,
+    and returns it as a PyTorch tensor. It is particularly useful for accessing transformed
+    data layers stored in the AnnData object. Optionally, a logger can be provided to log the process.
 
     Args:
-        path_to_data (str): Path to the .h5ad file containing the single-cell data.
-        layer (str): Name of the layer to be extracted from the AnnData object.
-        logger (Optional[Logger]): Logger instance for logging information. Defaults to None.
+        path_to_data (str): The file path to the .h5ad file containing the AnnData object.
+        layer (str): The name of the data layer to be extracted from the AnnData object.
+        logger (Optional[Logger]): A logger instance for logging information about the loading
+            process. If None, no logging will occur. Defaults to None.
 
     Returns:
-        Tensor: The specified layer of the AnnData object as a PyTorch tensor.
+        Tensor: A PyTorch tensor containing the data from the specified layer.
     """
     if logger is not None:
         logger.info(f"Start loading dataset: {basename(path_to_data)}")
@@ -87,20 +90,19 @@ def save_adata_layer(
     logger: Optional[Logger] = None,
 ) -> None:
     """
-    Save a transformed data layer into an AnnData object and write it to a file.
+    Saves a transformed data layer into an AnnData object and writes it to a specified h5ad file.
 
-    This function adds a new layer containing transformed data to an AnnData object and writes the
-    updated object to a specified .h5ad file. Optionally logs the saving process using the provided logger.
+    This function adds a new data layer to the provided AnnData object and writes the updated
+    AnnData object to a file in h5ad format. The new layer can contain any transformed data,
+    such as denoised or normalized counts. Optionally, a logger can be provided to log the saving process.
 
     Args:
         adata (AnnData): The AnnData object to which the new layer will be added.
-        transformed_data (csr_matrix): The transformed data to be added as a new layer.
-        layer_name (str): The name of the new layer to be added to the AnnData object.
+        transformed_data (csr_matrix): The transformed data to be stored as a new layer.
+        layer_name (str): The name of the new data layer.
         filename (str): The file path where the updated AnnData object will be saved.
-        logger (Optional[Logger]): Logger instance for logging information. Defaults to None.
-
-    Returns:
-        None
+        logger (Optional[Logger]): A logger instance for logging information about the saving
+            process. If None, no logging will occur. Defaults to None.
     """
     adata.layers[layer_name] = transformed_data
     adata.write_h5ad(filename=filename)
