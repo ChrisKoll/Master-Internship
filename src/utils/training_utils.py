@@ -360,7 +360,7 @@ class Training:
                                 f"{fold}/Test/Loss/Recon", outputs.loss_recon, batch_idx
                             )
                             writer.add_scalar(
-                                f"{fold}/Test/Loss/KLD", outputs.kl_loss, batch_idx
+                                f"{fold}/Test/Loss/KLD", outputs.loss_kl, batch_idx
                             )
 
                     if self.logger is not None:
@@ -370,7 +370,7 @@ class Training:
 
                         if isinstance(self.model, VariationalAutoencoder):
                             self.logger.info(
-                                f">>> Batch {batch_idx + 1} - TEST: ReconLoss: {outputs.loss_recon:.4f}, KLD: {outputs.kl_loss:.4f}"
+                                f">>> Batch {batch_idx + 1} - TEST: ReconLoss: {outputs.loss_recon:.4f}, KLD: {outputs.loss_kl:.4f}"
                             )
 
                     # Data for performance plotting
