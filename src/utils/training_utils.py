@@ -363,15 +363,16 @@ class Training:
                                 f"{fold}/Test/Loss/KLD", outputs.loss_kl, batch_idx
                             )
 
-                    if self.logger is not None:
-                        self.logger.info(
-                            f">>> Batch {batch_idx + 1} - TEST: {outputs.loss:.4f}"
-                        )
-
-                        if isinstance(self.model, VariationalAutoencoder):
+                    if batch_idx % 10 == 0:
+                        if self.logger is not None:
                             self.logger.info(
-                                f">>> Batch {batch_idx + 1} - TEST: ReconLoss: {outputs.loss_recon:.4f}, KLD: {outputs.loss_kl:.4f}"
+                                f">>> Batch {batch_idx + 1} - TEST: {outputs.loss:.4f}"
                             )
+
+                            if isinstance(self.model, VariationalAutoencoder):
+                                self.logger.info(
+                                    f">>> Batch {batch_idx + 1} - TEST: ReconLoss: {outputs.loss_recon:.4f}, KLD: {outputs.loss_kl:.4f}"
+                                )
 
                     # Data for performance plotting
                     recons.extend(list(zip(batch, outputs.x_recon, labels)))
