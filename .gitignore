@@ -13,6 +13,7 @@ data/*
 !data/adata_1000x1000_sample_normalized.h5adp
 logs/*
 !logs/.gitkeep
+output/*
 plots/*
 !plots/.gitkeep
 runs/*

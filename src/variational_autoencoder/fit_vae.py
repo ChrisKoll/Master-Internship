@@ -93,7 +93,8 @@ def main() -> None:
     logger.info("Model assembled")
 
     # List of donors to be used for the testing process
-    donors = ["D1", "H2", "D5"]
+    # donors = ["D1", "H2", "D5"]
+    donors = ["D1"]
 
     # Initialize the training configuration with provided parameters
     training_conf = TrainingConfig(
