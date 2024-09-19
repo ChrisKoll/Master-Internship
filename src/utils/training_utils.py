@@ -7,18 +7,21 @@ autoencoders and variational autoencoders. The module provides functionality for
 training, validation, and testing while logging performance metrics via TensorBoard.
 
 Classes:
+    - EarlyStopping: Tracks the validation loss during training. If after a certain range of 
+        epochs the loss does not improve any more, the training is stopped early.
     - Training: A class to handle the setup, training, validation, and testing of the 
-      autoencoder using cross-validation.
+        autoencoder using cross-validation.
 
 Methods:
     - fit: Initializes and manages the training process across cross-validation folds.
     - _train_fold: Handles the model training for each fold, including splitting the data 
-      into train, validation, and test sets.
+          into train, validation, and test sets.
     - _train_epoch: Executes a single epoch of training and computes the gradient norms and 
-      loss for each batch.
+          loss for each batch.
     - _val_epoch: Validates the model on the validation dataset for a single epoch, 
-      calculating validation loss.
-    - _test_fold: Tests the model on the test dataset from the current fold and logs performance metrics.
+          calculating validation loss.
+    - _test_fold: Tests the model on the test dataset from the current fold and logs 
+            performance metrics.
 """
 
 # Standard imports
@@ -44,6 +47,58 @@ from src.variational_autoencoder.vae_model import VariationalAutoencoder
 
 __author__ = "Christian Kolland"
 __version__ = 1.0
+
+
+class EarlyStopping:
+    """Tracks the validation loss over time
+
+    Tracks the validation loss and stops training at the point before overfitting.
+
+    Args:
+        patience (int, optional): Accepted range of epochs that do not improve. Defaults to 10.
+        min_delta (float, optional): Minimum change in validation to qualify as improvment.
+            Defaults to 0.
+    """
+
+    def __init__(self, patience: int = 10, min_delta: float = 0) -> None:
+        """Initializes the early stopping mechanism.
+
+        Args:
+            patience (int, optional): Accepted range of epochs that do not improve. Defaults to 10.
+            min_delta (float, optional): Minimum change in validation to qualify as improvment.
+                Defaults to 0.
+
+        Attributes:
+            memory (int): Counter for epochs without improvement.
+            best_loss (float or None): The best recorded loss so far, used for comparison.
+            stop_early (bool): Whether the early stopping condition has been triggered.
+        """
+        self.patience = patience
+        self.min_delta = min_delta
+        self.memory: int = 0
+        self.best_loss: Optional[float] = None
+        self.stop_early: bool = False
+
+    def __call__(self, val_loss: float) -> None:
+        """Updates the early stopping state based on the current validation loss.
+
+        This method tracks the loss to see if training should stop early. If the loss does not improve by the specified amount for a number of epochs equal to the `patience` setting, the `stop_early` attribute is set to `True`.
+
+        Args:
+            val_loss (float): The current epoch's validation loss to compare against the
+                best recorded loss.
+        """
+        if self.best_loss is None:
+            self.best_loss = val_loss
+        elif val_loss > self.best_loss - self.min_delta:
+            # If val loss is worse compared to best loss
+            self.memory += 1
+            if self.memory >= self.patience:
+                self.stop_early = True
+        else:
+            # If val loss is best loss
+            self.best_loss = val_loss
+            self.memory = 0
 
 
 class Training:
@@ -162,6 +217,8 @@ class Training:
                 logger=self.logger,
             )
 
+            # Evaluates validation loss
+            stop_early = EarlyStopping(patience=10)
             for epoch in range(self.training.num_epochs):
                 if self.logger is not None:
                     self.logger.info(
@@ -170,7 +227,14 @@ class Training:
 
                 # Training and validation
                 self._train_epoch(fold, epoch + 1, train_loader, writer)
-                self._val_epoch(fold, epoch + 1, val_loader, writer)
+                avg_val_loss = self._val_epoch(fold, epoch + 1, val_loader, writer)
+
+                # Track avg val loss
+                stop_early(avg_val_loss)
+                if stop_early.stop_early:
+                    if self.logger is not None:
+                        self.logger.info(f">>>Epoch {epoch + 1} EARLY STOP")
+                    break
 
             # Test on fold
             # If model performs good on completly unseen data it generalizes good
@@ -273,7 +337,7 @@ class Training:
         epoch: int,
         val_loader: DataLoader,
         writer: Optional[SummaryWriter] = None,
-    ) -> None:
+    ) -> int:
         """
         Validates the model on the validation dataset.
 
@@ -284,6 +348,9 @@ class Training:
             epoch (int): The current epoch number.
             val_loader (DataLoader): DataLoader for the validation data.
             writer (Optional[SummaryWriter]): TensorBoard writer for logging. Defaults to None.
+
+        Returns:
+            Int: Avg validation loss over epoch
         """
         self.model.eval()
 
@@ -327,6 +394,8 @@ class Training:
                 self.logger.info(
                     f">>> Epoch {epoch} - VALIDATION: Avg ReconLoss: {avg_recon_loss:.4f}, Avg KLD: {avg_kld:.4f}"
                 )
+
+        return avg_loss
 
     def _test_fold(
         self,
