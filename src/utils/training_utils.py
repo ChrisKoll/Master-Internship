@@ -24,6 +24,7 @@ Methods:
 # Standard imports
 from datetime import datetime
 from logging import Logger
+import os
 from typing import Optional, Union
 
 # Third-party imports
@@ -119,8 +120,9 @@ class Training:
         """
         writer = None
         if use_writer:
+            os.makedirs(f"output/{self.model_name}/", exist_ok=True)
             writer = SummaryWriter(
-                f'runs/hca/{self.model_name}_{datetime.now().strftime("%d%m%Y-%H%M")}'
+                f'output/{self.model_name}/{self.model_name}_{datetime.now().strftime("%d%m%Y-%H%M")}'
             )
 
         self._train_fold(writer)
@@ -231,8 +233,8 @@ class Training:
                             f"Epoch {epoch} - Batch {batch_idx}: GradNorm: {grad_norm:.4f}, Loss: {loss.item():.4f}"
                         )
 
-                # Clip gradients
-                nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
+                # Clip gradients -> Not needed
+                # nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
 
                 # Update the model parameters
                 # Needs to be after gradient norm calculation

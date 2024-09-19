@@ -316,8 +316,8 @@ def plot_recon_performance(
     # Makes legend not overflow
     fig.tight_layout()
 
-    os.makedirs(f"plots/{dir}/", exist_ok=True)
-    fig.savefig(f"plots/{dir}/{fold}_performance_{scope.lower()}_{method.lower()}.png")
+    os.makedirs(f"output/{dir}/", exist_ok=True)
+    fig.savefig(f"output/{dir}/{fold}_performance_{scope.lower()}_{method.lower()}.png")
 
 
 def plot_latent_space(
@@ -367,5 +367,5 @@ def plot_latent_space(
 
     fig.tight_layout()
 
-    os.makedirs(f"plots/{dir}/", exist_ok=True)
-    fig.savefig(f"plots/{dir}/{fold}_latent_space.png")
+    os.makedirs(f"output/{dir}/", exist_ok=True)
+    fig.savefig(f"output/{dir}/{fold}_latent_space.png")
