@@ -37,7 +37,7 @@
                 {
                     "role": "input",
                     "type": "linear",
-                    "in_dimension": 300,
+                    "in_dimension": 100,
                     "out_dimension": 625,
                     "activation": "relu"
                 },
