@@ -1,6 +1,6 @@
 {
     "model": {
-        "name": "VAE_LR_2",
+        "name": "AE_Activation_3",
         "type": "ae",
         "layers": {
             "encoder": [
@@ -9,27 +9,27 @@
                     "type": "linear",
                     "in_dimension": 5000,
                     "out_dimension": 2500,
-                    "activation": "relu"
+                    "activation": "sig"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 2500,
                     "out_dimension": 1250,
-                    "activation": "relu"
+                    "activation": "sig"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 1250,
                     "out_dimension": 625,
-                    "activation": "relu"
+                    "activation": "sig"
                 },
                 {
                     "role": "latent_space",
                     "type": "linear",
                     "in_dimension": 625,
-                    "out_dimension": 200,
+                    "out_dimension": 100,
                     "activation": ""
                 }
             ],
@@ -39,21 +39,21 @@
                     "type": "linear",
                     "in_dimension": 100,
                     "out_dimension": 625,
-                    "activation": "relu"
+                    "activation": "sig"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 625,
                     "out_dimension": 1250,
-                    "activation": "relu"
+                    "activation": "sig"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 1250,
                     "out_dimension": 2500,
-                    "activation": "relu"
+                    "activation": "sig"
                 },
                 {
                     "role": "output",

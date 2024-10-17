@@ -218,7 +218,7 @@ class Training:
             )
 
             # Evaluates validation loss
-            stop_early = EarlyStopping(patience=10)
+            stop_early = EarlyStopping(patience=20)
             for epoch in range(self.training.num_epochs):
                 if self.logger is not None:
                     self.logger.info(

@@ -1,6 +1,6 @@
 {
     "model": {
-        "name": "VAE_LR_1",
+        "name": "AE_Activation_1",
         "type": "ae",
         "layers": {
             "encoder": [
@@ -29,7 +29,7 @@
                     "role": "latent_space",
                     "type": "linear",
                     "in_dimension": 625,
-                    "out_dimension": 200,
+                    "out_dimension": 100,
                     "activation": ""
                 }
             ],
@@ -67,7 +67,7 @@
         "loss_function": "mse",
         "optimization": {
             "optimizer": "adam",
-            "learning_rate": 1e-2,
+            "learning_rate": 1e-4,
             "weight_decay": 1e-3
         }
     },
