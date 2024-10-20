@@ -1,6 +1,6 @@
 {
     "model": {
-        "name": "AE_Activation_1",
+        "name": "VAE_Loss_1",
         "type": "ae",
         "layers": {
             "encoder": [
@@ -9,27 +9,27 @@
                     "type": "linear",
                     "in_dimension": 5000,
                     "out_dimension": 2500,
-                    "activation": "relu"
+                    "activation": "silu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 2500,
                     "out_dimension": 1250,
-                    "activation": "relu"
+                    "activation": "silu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 1250,
                     "out_dimension": 625,
-                    "activation": "relu"
+                    "activation": "silu"
                 },
                 {
                     "role": "latent_space",
                     "type": "linear",
                     "in_dimension": 625,
-                    "out_dimension": 100,
+                    "out_dimension": 200,
                     "activation": ""
                 }
             ],
@@ -39,21 +39,21 @@
                     "type": "linear",
                     "in_dimension": 100,
                     "out_dimension": 625,
-                    "activation": "relu"
+                    "activation": "silu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 625,
                     "out_dimension": 1250,
-                    "activation": "relu"
+                    "activation": "silu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 1250,
                     "out_dimension": 2500,
-                    "activation": "relu"
+                    "activation": "silu"
                 },
                 {
                     "role": "output",

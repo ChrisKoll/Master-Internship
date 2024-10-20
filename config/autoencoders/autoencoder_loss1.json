@@ -1,6 +1,6 @@
 {
     "model": {
-        "name": "VAE_Activation_2",
+        "name": "AE_Loss_1",
         "type": "ae",
         "layers": {
             "encoder": [
@@ -29,7 +29,7 @@
                     "role": "latent_space",
                     "type": "linear",
                     "in_dimension": 625,
-                    "out_dimension": 200,
+                    "out_dimension": 100,
                     "activation": ""
                 }
             ],
