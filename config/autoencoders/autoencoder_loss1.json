@@ -9,21 +9,21 @@
                     "type": "linear",
                     "in_dimension": 5000,
                     "out_dimension": 2500,
-                    "activation": "silu"
+                    "activation": "relu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 2500,
                     "out_dimension": 1250,
-                    "activation": "silu"
+                    "activation": "relu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 1250,
                     "out_dimension": 625,
-                    "activation": "silu"
+                    "activation": "relu"
                 },
                 {
                     "role": "latent_space",
@@ -39,21 +39,21 @@
                     "type": "linear",
                     "in_dimension": 100,
                     "out_dimension": 625,
-                    "activation": "silu"
+                    "activation": "relu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 625,
                     "out_dimension": 1250,
-                    "activation": "silu"
+                    "activation": "relu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 1250,
                     "out_dimension": 2500,
-                    "activation": "silu"
+                    "activation": "relu"
                 },
                 {
                     "role": "output",

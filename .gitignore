@@ -3,6 +3,7 @@
 # |=========|
 
 # Project folders
+archive/*
 config/*
 !config/autoencoder_dev.json
 !config/autoencoders/

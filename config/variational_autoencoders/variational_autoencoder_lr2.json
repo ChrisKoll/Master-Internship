@@ -1,6 +1,6 @@
 {
     "model": {
-        "name": "AE_Loss_2",
+        "name": "VAE_LR_2",
         "type": "ae",
         "layers": {
             "encoder": [
@@ -29,7 +29,7 @@
                     "role": "latent_space",
                     "type": "linear",
                     "in_dimension": 625,
-                    "out_dimension": 100,
+                    "out_dimension": 200,
                     "activation": ""
                 }
             ],
@@ -64,7 +64,7 @@
                 }
             ]
         },
-        "loss_function": "mae",
+        "loss_function": "mse",
         "optimization": {
             "optimizer": "adam",
             "learning_rate": 1e-4,
