@@ -1,7 +1,7 @@
 {
     "model": {
         "name": "VAE_Activation_3",
-        "type": "ae",
+        "type": "vae",
         "layers": {
             "encoder": [
                 {
