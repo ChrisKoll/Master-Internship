@@ -1,6 +1,6 @@
 {
     "model": {
-        "name": "AE_ReLU_BCE",
+        "name": "AE_Activation_2",
         "type": "ae",
         "layers": {
             "encoder": [
@@ -9,21 +9,21 @@
                     "type": "linear",
                     "in_dimension": 5000,
                     "out_dimension": 2500,
-                    "activation": "relu"
+                    "activation": "silu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 2500,
                     "out_dimension": 1250,
-                    "activation": "relu"
+                    "activation": "silu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 1250,
                     "out_dimension": 625,
-                    "activation": "relu"
+                    "activation": "silu"
                 },
                 {
                     "role": "latent_space",
@@ -39,21 +39,21 @@
                     "type": "linear",
                     "in_dimension": 100,
                     "out_dimension": 625,
-                    "activation": "relu"
+                    "activation": "silu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 625,
                     "out_dimension": 1250,
-                    "activation": "relu"
+                    "activation": "silu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 1250,
                     "out_dimension": 2500,
-                    "activation": "relu"
+                    "activation": "silu"
                 },
                 {
                     "role": "output",
@@ -64,15 +64,15 @@
                 }
             ]
         },
-        "loss_function": "bce",
+        "loss_function": "mse",
         "optimization": {
             "optimizer": "adam",
-            "learning_rate": 1e-2,
+            "learning_rate": 1e-4,
             "weight_decay": 1e-3
         }
     },
     "training": {
         "batch_size": 128,
-        "training_epochs": 100
+        "training_epochs": 200
     }
 }

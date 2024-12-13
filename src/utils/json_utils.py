@@ -38,7 +38,7 @@ _LAYER_ROLES = ["input", "hidden", "latent_space", "output"]
 _LAYER_TYPES = {"linear": nn.Linear}
 _ACTIVATION_FUNCTIONS = {"": None, "relu": nn.ReLU, "silu": nn.SiLU, "sig": nn.Sigmoid}
 _OPTIMIZERS = {"adam": optim.Adam}
-_LOSS_FUNCTIONS = {"mse": nn.MSELoss, "bce": nn.BCELoss}
+_LOSS_FUNCTIONS = {"mse": nn.MSELoss, "mae": nn.L1Loss}
 
 
 class LayerConfig(BaseModel):

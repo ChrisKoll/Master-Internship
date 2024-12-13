@@ -1,7 +1,7 @@
 {
     "model": {
-        "name": "VAE_SiLU_BCE",
-        "type": "vae",
+        "name": "AE_Loss_1",
+        "type": "ae",
         "layers": {
             "encoder": [
                 {
@@ -9,27 +9,27 @@
                     "type": "linear",
                     "in_dimension": 5000,
                     "out_dimension": 2500,
-                    "activation": "silu"
+                    "activation": "relu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 2500,
                     "out_dimension": 1250,
-                    "activation": "silu"
+                    "activation": "relu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 1250,
                     "out_dimension": 625,
-                    "activation": "silu"
+                    "activation": "relu"
                 },
                 {
                     "role": "latent_space",
                     "type": "linear",
                     "in_dimension": 625,
-                    "out_dimension": 200,
+                    "out_dimension": 100,
                     "activation": ""
                 }
             ],
@@ -39,21 +39,21 @@
                     "type": "linear",
                     "in_dimension": 100,
                     "out_dimension": 625,
-                    "activation": "silu"
+                    "activation": "relu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 625,
                     "out_dimension": 1250,
-                    "activation": "silu"
+                    "activation": "relu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 1250,
                     "out_dimension": 2500,
-                    "activation": "silu"
+                    "activation": "relu"
                 },
                 {
                     "role": "output",
@@ -64,15 +64,15 @@
                 }
             ]
         },
-        "loss_function": "bce",
+        "loss_function": "mse",
         "optimization": {
             "optimizer": "adam",
-            "learning_rate": 1e-2,
+            "learning_rate": 1e-4,
             "weight_decay": 1e-3
         }
     },
     "training": {
         "batch_size": 128,
-        "training_epochs": 100
+        "training_epochs": 200
     }
 }

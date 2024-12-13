@@ -1,7 +1,7 @@
 {
     "model": {
-        "name": "AE_Sigmoid_MSE",
-        "type": "ae",
+        "name": "VAE_Latent_300",
+        "type": "vae",
         "layers": {
             "encoder": [
                 {
@@ -9,27 +9,27 @@
                     "type": "linear",
                     "in_dimension": 5000,
                     "out_dimension": 2500,
-                    "activation": "sig"
+                    "activation": "relu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 2500,
                     "out_dimension": 1250,
-                    "activation": "sig"
+                    "activation": "relu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 1250,
                     "out_dimension": 625,
-                    "activation": "sig"
+                    "activation": "relu"
                 },
                 {
                     "role": "latent_space",
                     "type": "linear",
                     "in_dimension": 625,
-                    "out_dimension": 300,
+                    "out_dimension": 600,
                     "activation": ""
                 }
             ],
@@ -39,21 +39,21 @@
                     "type": "linear",
                     "in_dimension": 300,
                     "out_dimension": 625,
-                    "activation": "sig"
+                    "activation": "relu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 625,
                     "out_dimension": 1250,
-                    "activation": "sig"
+                    "activation": "relu"
                 },
                 {
                     "role": "hidden",
                     "type": "linear",
                     "in_dimension": 1250,
                     "out_dimension": 2500,
-                    "activation": "sig"
+                    "activation": "relu"
                 },
                 {
                     "role": "output",
